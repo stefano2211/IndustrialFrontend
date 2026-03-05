@@ -6,18 +6,11 @@
       
       <nav class="flex gap-6">
         <router-link
-          to="/workspace/models"
-          class="text-[15px] font-medium text-gray-400 pb-3 -mb-[1px] border-b-2 border-transparent hover:text-gray-200 transition-colors"
-          active-class="!text-white border-white"
-        >
-          Models
-        </router-link>
-        <router-link
           to="/workspace/knowledge"
           class="text-[15px] font-medium text-gray-400 pb-3 -mb-[1px] border-b-2 border-transparent hover:text-gray-200 transition-colors"
           active-class="!text-white border-white"
         >
-          Knowledge
+          Conocimiento
         </router-link>
         <router-link
           to="/workspace/prompts"
@@ -25,6 +18,13 @@
           active-class="!text-white border-white"
         >
           Prompts
+        </router-link>
+        <router-link
+          to="/workspace/models"
+          class="text-[15px] font-medium text-gray-400 pb-3 -mb-[1px] border-b-2 border-transparent hover:text-gray-200 transition-colors"
+          active-class="!text-white border-white"
+        >
+          Modelos
         </router-link>
       </nav>
     </header>

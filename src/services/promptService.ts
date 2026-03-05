@@ -1,0 +1,51 @@
+import api from './api'
+
+export interface Prompt {
+    id: string
+    title: string
+    description?: string
+    query: string
+    icon?: string
+    is_enabled: boolean
+    created_at: string
+    updated_at: string
+}
+
+export interface PromptCreate {
+    title: string
+    description?: string
+    query: string
+    icon?: string
+    is_enabled?: boolean
+}
+
+export interface PromptUpdate {
+    title?: string
+    description?: string
+    query?: string
+    icon?: string
+    is_enabled?: boolean
+}
+
+const promptService = {
+    async listPrompts(onlyEnabled = false): Promise<Prompt[]> {
+        const response = await api.get('/prompts/', { params: { only_enabled: onlyEnabled } })
+        return response.data
+    },
+
+    async createPrompt(prompt: PromptCreate): Promise<Prompt> {
+        const response = await api.post('/prompts/', prompt)
+        return response.data
+    },
+
+    async updatePrompt(id: string, prompt: PromptUpdate): Promise<Prompt> {
+        const response = await api.patch(`/prompts/${id}`, prompt)
+        return response.data
+    },
+
+    async deletePrompt(id: string): Promise<void> {
+        await api.delete(`/prompts/${id}`)
+    }
+}
+
+export default promptService

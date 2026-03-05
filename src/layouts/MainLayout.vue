@@ -4,9 +4,13 @@ import { useRouter } from 'vue-router'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import { conversationService, type Conversation, type MessageItem } from '@/services/conversationService'
 import { knowledgeService, type KnowledgeBase } from '@/services/knowledgeService'
+import modelService from '@/services/modelService'
 
 const router = useRouter()
 const isSidebarOpen = ref(true)
+
+// Model state
+const orchestratorModel = ref('Cargando...')
 
 // Conversation state
 const conversations = ref<Conversation[]>([])
@@ -21,6 +25,22 @@ const showKbDropdown = ref(false)
 
 function toggleSidebar() {
   isSidebarOpen.value = !isSidebarOpen.value
+}
+
+// Load model info
+async function loadModelInfo() {
+  try {
+    const configs = await modelService.listConfigs()
+    const orchestrator = configs.find(c => c.role === 'orchestrator')
+    if (orchestrator) {
+      orchestratorModel.value = orchestrator.model_name
+    } else {
+      orchestratorModel.value = 'gpt-4o' // Default fallback
+    }
+  } catch (error) {
+    console.error('Failed to load model info', error)
+    orchestratorModel.value = 'Error'
+  }
 }
 
 // Load conversations from backend
@@ -49,8 +69,8 @@ function selectKb(id: string | null) {
 async function handleNewChat() {
   activeThreadId.value = null
   activeMessages.value = []
-  if (router.currentRoute.value.path !== '/') {
-    router.push('/')
+  if (router.currentRoute.value.path !== '/chat') {
+    router.push('/chat')
   }
 }
 
@@ -59,8 +79,8 @@ async function handleSelectConversation(threadId: string) {
   activeThreadId.value = threadId
   isLoadingMessages.value = true
   
-  if (router.currentRoute.value.path !== '/') {
-    router.push('/')
+  if (router.currentRoute.value.path !== '/chat') {
+    router.push('/chat')
   }
 
   try {
@@ -104,6 +124,7 @@ provide('activeKnowledgeBaseId', activeKnowledgeBaseId)
 onMounted(() => {
   loadConversations()
   loadKnowledgeBases()
+  loadModelInfo()
 })
 </script>
 
@@ -119,9 +140,9 @@ onMounted(() => {
     />
 
     <!-- Main Content Area Wrapper -->
-    <main class="flex-1 flex flex-col relative bg-[#212121] min-w-0">
+    <main class="flex-1 flex flex-col relative bg-[#0d0d0d] min-w-0">
       <!-- Top header for mobile/toggling -->
-      <header class="h-16 shrink-0 flex items-center px-4 sticky top-0 w-full z-10 bg-[#212121] pointer-events-none">
+      <header class="h-16 shrink-0 flex items-center px-4 sticky top-0 w-full z-10 bg-[#0d0d0d]">
         <div class="pointer-events-auto flex items-center h-full pt-2">
           <button 
             @click="toggleSidebar" 
@@ -134,9 +155,9 @@ onMounted(() => {
           <!-- Context/Model selector placeholder -->
           <slot name="header">
             <div class="ml-4 flex items-center gap-3 relative">
-              <div class="flex items-center gap-2 text-[20px] font-semibold cursor-pointer hover:bg-white/5 px-3 py-1.5 rounded-xl transition-colors group">
-                gpt-4.1-nano
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down text-gray-500 group-hover:text-gray-300 mt-1"><path d="m6 9 6 6 6-6"/></svg>
+              <div @click="router.push('/workspace/models')" class="flex items-center gap-2 text-[20px] font-semibold cursor-pointer hover:bg-white/5 px-3 py-1.5 rounded-xl transition-colors group">
+                {{ orchestratorModel }}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-500 group-hover:text-gray-300 mt-1 opacity-0 group-hover:opacity-100 transition-all"><path d="m9 18 6-6-6-6"/></svg>
               </div>
             </div>
           </slot>

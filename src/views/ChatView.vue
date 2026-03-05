@@ -56,7 +56,7 @@ async function handleSendMessage(content: string) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-full relative overflow-hidden bg-[#0a0a0a]">
+  <div class="flex flex-col h-full w-full relative overflow-hidden bg-transparent">
     
     <!-- Loading messages indicator -->
     <div v-if="isLoadingMessages" class="flex-1 flex items-center justify-center">

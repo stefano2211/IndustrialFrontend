@@ -1,9 +1,14 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import promptService, { type Prompt } from '@/services/promptService'
+
 const emit = defineEmits<{
   (e: 'select', query: string): void
 }>()
 
-const suggestions = [
+const suggestions = ref<any[]>([])
+
+const defaultSuggestions = [
   {
     title: 'Show me a code snippet',
     description: "of a website's sticky header",
@@ -24,6 +29,26 @@ const suggestions = [
     fullWidth: true
   }
 ]
+
+onMounted(async () => {
+  try {
+    const fetchedPrompts = await promptService.listPrompts(true) // Fetch only enabled
+    if (fetchedPrompts.length > 0) {
+      suggestions.value = fetchedPrompts.map(p => ({
+        title: p.title,
+        description: p.description,
+        icon: p.icon || `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles text-gray-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>`,
+        query: p.query,
+        fullWidth: false // Could be dynamic if added to schema
+      }))
+    } else {
+      suggestions.value = defaultSuggestions
+    }
+  } catch (error) {
+    console.warn('Failed to fetch prompts, falling back to defaults:', error)
+    suggestions.value = defaultSuggestions
+  }
+})
 </script>
 
 <template>
