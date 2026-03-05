@@ -17,5 +17,10 @@ export const documentService = {
     async getStatus(taskId: string) {
         const response = await api.get(`/status/${taskId}`)
         return response.data
+    },
+
+    async deleteDocument(docId: string) {
+        const response = await api.delete(`/documents/${docId}`)
+        return response.data
     }
 }

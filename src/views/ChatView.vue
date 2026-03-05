@@ -7,6 +7,7 @@ import type { MessageItem } from '@/services/conversationService'
 
 // Injected from MainLayout
 const activeThreadId = inject<Ref<string | null>>('activeThreadId', ref(null))
+const activeKnowledgeBaseId = inject<Ref<string | null>>('activeKnowledgeBaseId', ref(null))
 const activeMessages = inject<Ref<MessageItem[]>>('activeMessages', ref([]))
 const isLoadingMessages = inject<Ref<boolean>>('isLoadingMessages', ref(false))
 const onMessageSent = inject<(threadId: string, userMsg: MessageItem, assistantMsg: MessageItem) => void>('onMessageSent', () => {})
@@ -19,7 +20,11 @@ async function handleSendMessage(content: string) {
   isLoading.value = true
   
   try {
-    const data = await chatService.sendMessage(content, activeThreadId.value || undefined)
+    const data = await chatService.sendMessage(
+      content, 
+      activeThreadId.value || undefined,
+      activeKnowledgeBaseId.value || undefined
+    )
     
     // If backend generated a new thread_id, propagate it
     const threadId = data.thread_id || activeThreadId.value || 'unknown'

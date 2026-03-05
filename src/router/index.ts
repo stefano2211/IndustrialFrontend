@@ -2,6 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ChatView from '../views/ChatView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import WorkspaceLayout from '../views/workspace/WorkspaceLayout.vue'
+import KnowledgeListView from '../views/workspace/KnowledgeListView.vue'
+import KnowledgeDetailView from '../views/workspace/KnowledgeDetailView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,6 +14,25 @@ const router = createRouter({
             name: 'chat',
             component: ChatView,
             meta: { layout: 'main', requiresAuth: true }
+        },
+        {
+            path: '/workspace',
+            component: WorkspaceLayout,
+            meta: { layout: 'main', requiresAuth: true },
+            redirect: '/workspace/knowledge',
+            children: [
+                {
+                    path: 'knowledge',
+                    name: 'knowledge-list',
+                    component: KnowledgeListView
+                },
+                {
+                    path: 'knowledge/:id',
+                    name: 'knowledge-detail',
+                    component: KnowledgeDetailView,
+                    props: true
+                }
+            ]
         },
         {
             path: '/login',
