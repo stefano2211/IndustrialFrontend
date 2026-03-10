@@ -16,6 +16,7 @@ export const chatService = {
         query: string,
         threadId: string | undefined,
         knowledgeBaseId: string | undefined,
+        params: Record<string, any> | undefined,
         onToken: (token: string) => void,
         onMeta: (meta: { thread_id: string }) => void,
         onDone: (fullContent: string) => void,
@@ -34,6 +35,7 @@ export const chatService = {
                 query,
                 thread_id: threadId,
                 knowledge_base_id: knowledgeBaseId,
+                params: params || undefined,
             }),
         })
 

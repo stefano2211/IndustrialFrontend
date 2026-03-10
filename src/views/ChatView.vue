@@ -11,6 +11,7 @@ const activeKnowledgeBaseId = inject<Ref<string | null>>('activeKnowledgeBaseId'
 const activeMessages = inject<Ref<MessageItem[]>>('activeMessages', ref([]))
 const isLoadingMessages = inject<Ref<boolean>>('isLoadingMessages', ref(false))
 const onMessageSent = inject<(threadId: string, userMsg: MessageItem, assistantMsg: MessageItem) => void>('onMessageSent', () => {})
+const chatParams = inject<any>('chatParams', {})
 
 const isLoading = ref(false)
 const streamingContent = ref('')
@@ -42,10 +43,21 @@ async function handleSendMessage(content: string) {
   scrollToBottom()
 
   try {
+    // Build params object, omitting null/empty values
+    const params: Record<string, any> = {}
+    if (chatParams.system_prompt) params.system_prompt = chatParams.system_prompt
+    if (chatParams.temperature !== null) params.temperature = chatParams.temperature
+    if (chatParams.max_tokens !== null) params.max_tokens = chatParams.max_tokens
+    if (chatParams.top_p !== null) params.top_p = chatParams.top_p
+    if (chatParams.top_k !== null) params.top_k = chatParams.top_k
+    if (chatParams.seed !== null) params.seed = chatParams.seed
+    if (chatParams.stop_sequence) params.stop_sequence = chatParams.stop_sequence
+
     await chatService.sendMessageStream(
       content,
       activeThreadId.value || undefined,
       activeKnowledgeBaseId.value || undefined,
+      Object.keys(params).length > 0 ? params : undefined,
       // onToken
       (token: string) => {
         streamingContent.value += token
