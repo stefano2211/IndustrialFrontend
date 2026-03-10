@@ -1,5 +1,11 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Conversation } from '@/services/conversationService'
+
+const router = useRouter()
+
+const showProfileMenu = ref(false)
 
 const props = defineProps<{
   isOpen: boolean
@@ -127,9 +133,63 @@ function getInitials(name: string): string {
     </div>
 
     <!-- User Profile Footer -->
-    <div class="p-3 mt-auto shrink-0 mb-1">
+    <div class="p-3 mt-auto shrink-0 mb-1 relative">
+      <!-- Profile popup menu -->
+      <Transition name="popup">
+        <div 
+          v-if="showProfileMenu" 
+          class="absolute bottom-full left-3 right-3 mb-2 bg-[#2f2f2f] rounded-2xl shadow-2xl border border-white/[0.08] overflow-hidden z-30"
+        >
+          <!-- User info header -->
+          <div class="px-4 py-3 border-b border-white/[0.06]">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 shrink-0 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <div class="text-[14px] font-semibold text-white">{{ userName || 'User' }}</div>
+                <div class="flex items-center gap-1.5 text-[12px] text-green-400">
+                  <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                  Active
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Menu items -->
+          <div class="py-1.5">
+            <button 
+              @click="showProfileMenu = false; router.push('/admin/settings')"
+              class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              Settings
+            </button>
+            <button 
+              @click="showProfileMenu = false"
+              class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
+              Archived Chats
+            </button>
+          </div>
+
+          <!-- Divider + Sign Out -->
+          <div class="border-t border-white/[0.06] py-1.5">
+            <button 
+              @click="showProfileMenu = false; emit('logout')"
+              class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- Profile button trigger -->
       <button 
-        @click="emit('logout')"
+        @click="showProfileMenu = !showProfileMenu"
         class="flex items-center gap-3 px-3 py-2.5 w-full text-left text-sm text-[#ececec] hover:bg-white/5 rounded-xl transition-colors"
       >
         <div class="w-8 h-8 shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 rounded-full flex items-center justify-center text-[12px] font-bold text-white shadow-sm">
@@ -141,6 +201,11 @@ function getInitials(name: string): string {
       </button>
     </div>
   </aside>
+
+  <!-- Click outside to close profile menu -->
+  <Teleport to="body">
+    <div v-if="showProfileMenu" class="fixed inset-0 z-10" @click="showProfileMenu = false"></div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -151,4 +216,8 @@ function getInitials(name: string): string {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.popup-enter-active { transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1); }
+.popup-leave-active { transition: all 0.1s ease-in; }
+.popup-enter-from, .popup-leave-to { opacity: 0; transform: translateY(8px) scale(0.95); }
 </style>

@@ -7,6 +7,10 @@ import KnowledgeListView from '../views/workspace/KnowledgeListView.vue'
 import KnowledgeDetailView from '../views/workspace/KnowledgeDetailView.vue'
 import PromptsView from '../views/workspace/PromptsView.vue'
 import ModelsView from '../views/workspace/ModelsView.vue'
+import AdminLayout from '../views/admin/AdminLayout.vue'
+import UsersView from '../views/admin/UsersView.vue'
+import AnalyticsView from '../views/admin/AnalyticsView.vue'
+import SettingsView from '../views/admin/SettingsView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -54,6 +58,29 @@ const router = createRouter({
                     path: 'models',
                     name: 'models-list',
                     component: ModelsView
+                }
+            ]
+        },
+        {
+            path: '/admin',
+            component: AdminLayout,
+            meta: { layout: 'main', requiresAuth: true },
+            redirect: '/admin/users',
+            children: [
+                {
+                    path: 'users',
+                    name: 'admin-users',
+                    component: UsersView
+                },
+                {
+                    path: 'analytics',
+                    name: 'admin-analytics',
+                    component: AnalyticsView
+                },
+                {
+                    path: 'settings',
+                    name: 'admin-settings',
+                    component: SettingsView
                 }
             ]
         },
