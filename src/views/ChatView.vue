@@ -80,7 +80,7 @@ async function handleSendMessage(content: string) {
     />
     
     <!-- Active Chat State -->
-    <div v-else class="flex-1 overflow-y-auto px-4 md:px-6 pt-10 pb-44 w-full max-w-5xl mx-auto space-y-8 scroll-smooth no-scrollbar">
+    <div v-else class="flex-1 overflow-y-auto px-4 md:px-6 pt-10 pb-44 w-full max-w-4xl mx-auto space-y-6 scroll-smooth no-scrollbar">
       <div 
         v-for="(msg, idx) in activeMessages" 
         :key="idx"
@@ -89,10 +89,10 @@ async function handleSendMessage(content: string) {
       >
         <!-- Avatar -->
         <div class="shrink-0 mt-1">
-          <div v-if="msg.role === 'assistant'" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-white to-gray-400 text-black flex items-center justify-center font-bold text-[10px] shadow-lg shadow-white/5 ring-1 ring-white/20">
+          <div v-if="msg.role === 'assistant'" class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold text-[10px] shadow-sm">
             OI
           </div>
-          <div v-else class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-[10px] shadow-lg shadow-blue-500/10 ring-1 ring-white/10">
+          <div v-else class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-600 to-orange-700 text-white flex items-center justify-center font-bold text-[10px] shadow-sm">
             U
           </div>
         </div>
@@ -103,15 +103,15 @@ async function handleSendMessage(content: string) {
           :class="msg.role === 'user' ? 'items-end' : 'items-start'"
         >
           <div 
-            class="px-5 py-3.5 rounded-2xl text-[15px] leading-[1.6] transition-all"
+            class="px-5 py-3.5 rounded-2xl text-[15px] leading-[1.7] transition-all"
             :class="msg.role === 'user' 
-              ? 'bg-gradient-to-br from-gray-800 to-gray-900 text-gray-100 rounded-tr-none shadow-xl border border-white/5' 
-              : 'bg-white/5 backdrop-blur-md text-gray-200 rounded-tl-none border border-white/10 shadow-sm'"
+              ? 'bg-[#2f2f2f] text-[#ececec] rounded-tr-sm border border-white/5' 
+              : 'bg-transparent text-[#ececec] rounded-tl-sm'"
           >
             <div class="whitespace-pre-wrap">{{ msg.content }}</div>
           </div>
-          <span class="text-[10px] mt-1.5 opacity-30 font-medium uppercase tracking-tighter mx-1">
-            {{ msg.role === 'user' ? 'Enviado' : 'Aura AI' }}
+          <span class="text-[10px] mt-1.5 text-[#7a7a7a] font-medium mx-1">
+            {{ msg.role === 'user' ? '' : 'Aura AI' }}
           </span>
         </div>
       </div>
@@ -119,14 +119,14 @@ async function handleSendMessage(content: string) {
       <!-- Loading indicator -->
       <div v-if="isLoading" class="flex gap-4 w-full justify-start animate-in fade-in duration-300">
         <div class="shrink-0 mt-1">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-white to-gray-400 text-black flex items-center justify-center font-bold text-[10px] shadow-lg shadow-white/5 ring-1 ring-white/20">
+          <div class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold text-[10px] shadow-sm">
             OI
           </div>
         </div>
-        <div class="px-6 py-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center gap-2">
-          <div class="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-duration:0.8s]"></div>
-          <div class="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.2s]"></div>
-          <div class="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.4s]"></div>
+        <div class="px-5 py-4 flex items-center gap-1.5">
+          <div class="w-2 h-2 bg-[#7a7a7a] rounded-full animate-bounce [animation-duration:0.8s]"></div>
+          <div class="w-2 h-2 bg-[#7a7a7a] rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.2s]"></div>
+          <div class="w-2 h-2 bg-[#7a7a7a] rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.4s]"></div>
         </div>
       </div>
     </div>

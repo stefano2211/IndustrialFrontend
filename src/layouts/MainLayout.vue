@@ -5,9 +5,13 @@ import Sidebar from '@/components/layout/Sidebar.vue'
 import { conversationService, type Conversation, type MessageItem } from '@/services/conversationService'
 import { knowledgeService, type KnowledgeBase } from '@/services/knowledgeService'
 import modelService from '@/services/modelService'
+import api from '@/services/api'
 
 const router = useRouter()
 const isSidebarOpen = ref(true)
+
+// User state
+const userName = ref('')
 
 // Model state
 const orchestratorModel = ref('Cargando...')
@@ -27,6 +31,17 @@ function toggleSidebar() {
   isSidebarOpen.value = !isSidebarOpen.value
 }
 
+// Load user info
+async function loadUserInfo() {
+  try {
+    const response = await api.get('/users/me')
+    userName.value = response.data.username || response.data.email?.split('@')[0] || 'User'
+  } catch (error) {
+    console.error('Failed to load user info', error)
+    userName.value = 'User'
+  }
+}
+
 // Load model info
 async function loadModelInfo() {
   try {
@@ -35,7 +50,7 @@ async function loadModelInfo() {
     if (orchestrator) {
       orchestratorModel.value = orchestrator.model_name
     } else {
-      orchestratorModel.value = 'gpt-4o' // Default fallback
+      orchestratorModel.value = 'gpt-4o'
     }
   } catch (error) {
     console.error('Failed to load model info', error)
@@ -99,13 +114,11 @@ function handleLogout() {
   router.push('/login')
 }
 
-// Called by ChatView after sending a message — only refresh sidebar
+// Called by ChatView after sending a message
 function handleMessageSent(threadId: string, _userMsg: MessageItem, _assistantMsg: MessageItem) {
-  // If this was a new chat (no activeThreadId), set it now
   if (!activeThreadId.value) {
     activeThreadId.value = threadId
   }
-  // Refresh conversation list to pick up newly created or updated conversations
   loadConversations()
 }
 
@@ -118,10 +131,10 @@ provide('activeKnowledgeBaseId', activeKnowledgeBaseId)
 provide('knowledgeBases', knowledgeBases)
 provide('showKbDropdown', showKbDropdown)
 provide('selectKb', selectKb)
-provide('onMessageSent', handleMessageSent)
-provide('activeKnowledgeBaseId', activeKnowledgeBaseId)
+provide('userName', userName)
 
 onMounted(() => {
+  loadUserInfo()
   loadConversations()
   loadKnowledgeBases()
   loadModelInfo()
@@ -134,30 +147,30 @@ onMounted(() => {
       :is-open="isSidebarOpen" 
       :conversations="conversations"
       :active-thread-id="activeThreadId"
+      :user-name="userName"
       @new-chat="handleNewChat"
       @select-conversation="handleSelectConversation"
       @logout="handleLogout"
     />
 
     <!-- Main Content Area Wrapper -->
-    <main class="flex-1 flex flex-col relative bg-[#0d0d0d] min-w-0">
-      <!-- Top header for mobile/toggling -->
-      <header class="h-16 shrink-0 flex items-center px-4 sticky top-0 w-full z-10 bg-[#0d0d0d]">
-        <div class="pointer-events-auto flex items-center h-full pt-2">
+    <main class="flex-1 flex flex-col relative bg-[#212121] min-w-0">
+      <!-- Top header -->
+      <header class="h-14 shrink-0 flex items-center px-4 sticky top-0 w-full z-10 bg-[#212121]">
+        <div class="pointer-events-auto flex items-center h-full">
           <button 
             @click="toggleSidebar" 
-            class="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-all shadow-sm"
+            class="p-2 hover:bg-white/5 rounded-lg text-[#b4b4b4] hover:text-white transition-all"
             aria-label="Toggle Sidebar"
           >
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
           </button>
           
-          <!-- Context/Model selector placeholder -->
           <slot name="header">
-            <div class="ml-4 flex items-center gap-3 relative">
-              <div @click="router.push('/workspace/models')" class="flex items-center gap-2 text-[20px] font-semibold cursor-pointer hover:bg-white/5 px-3 py-1.5 rounded-xl transition-colors group">
+            <div class="ml-3 flex items-center gap-3 relative">
+              <div @click="router.push('/workspace/models')" class="flex items-center gap-2 text-lg font-medium cursor-pointer hover:bg-white/5 px-3 py-1.5 rounded-xl transition-colors group text-white">
                 {{ orchestratorModel }}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-500 group-hover:text-gray-300 mt-1 opacity-0 group-hover:opacity-100 transition-all"><path d="m9 18 6-6-6-6"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#7a7a7a] group-hover:text-[#b4b4b4] mt-0.5 opacity-0 group-hover:opacity-100 transition-all"><path d="m9 18 6-6-6-6"/></svg>
               </div>
             </div>
           </slot>

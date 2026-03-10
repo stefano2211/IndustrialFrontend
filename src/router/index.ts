@@ -32,7 +32,7 @@ const router = createRouter({
             path: '/workspace',
             component: WorkspaceLayout,
             meta: { layout: 'main', requiresAuth: true },
-            redirect: '/workspace/knowledge',
+            redirect: '/workspace/models',
             children: [
                 {
                     path: 'knowledge',
