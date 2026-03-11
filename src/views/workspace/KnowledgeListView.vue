@@ -138,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, inject } from 'vue'
 import { knowledgeService, type KnowledgeBase } from '@/services/knowledgeService'
 
 const collections = ref<KnowledgeBase[]>([])
@@ -146,6 +146,7 @@ const loading = ref(true)
 const showCreateModal = ref(false)
 const creating = ref(false)
 const searchQuery = ref('')
+const refreshKnowledgeBases = inject<() => void>('refreshKnowledgeBases', () => {})
 
 const newKb = ref({
   name: '',
@@ -181,6 +182,7 @@ async function createKb() {
     collections.value.unshift(created)
     showCreateModal.value = false
     newKb.value = { name: '', description: '' }
+    refreshKnowledgeBases()
   } catch (error) {
     console.error('Failed to create knowledge base:', error)
     alert('Error creating collection')
@@ -195,6 +197,7 @@ async function deleteKb(id: string) {
   try {
     await knowledgeService.deleteKnowledgeBase(id)
     collections.value = collections.value.filter(c => c.id !== id)
+    refreshKnowledgeBases()
   } catch (error) {
     console.error('Failed to delete kb:', error)
     alert('Error deleting collection')

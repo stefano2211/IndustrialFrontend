@@ -43,7 +43,10 @@ async function handleFileUpload() {
   uploadStatusText.value = 'Iniciando subida...'
   
   try {
-    const data = await documentService.uploadFile(selectedFile.value)
+    const data = await documentService.uploadFile(
+      selectedFile.value,
+      activeKnowledgeBaseId.value || undefined
+    )
     currentPollingTaskId.value = data.task_id
     
     const finalStatus = await pollTaskStatus(data.task_id)

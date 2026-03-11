@@ -84,6 +84,9 @@ async function loadConversations() {
 async function loadKnowledgeBases() {
   try {
     knowledgeBases.value = await knowledgeService.listKnowledgeBases()
+    if (activeKnowledgeBaseId.value && !knowledgeBases.value.find(kb => kb.id === activeKnowledgeBaseId.value)) {
+      activeKnowledgeBaseId.value = null
+    }
   } catch (error) {
     console.error('Failed to load knowledge bases', error)
   }
@@ -143,6 +146,7 @@ provide('isLoadingMessages', isLoadingMessages)
 provide('onMessageSent', handleMessageSent)
 provide('activeKnowledgeBaseId', activeKnowledgeBaseId)
 provide('knowledgeBases', knowledgeBases)
+provide('refreshKnowledgeBases', loadKnowledgeBases)
 provide('showKbDropdown', showKbDropdown)
 provide('selectKb', selectKb)
 provide('userName', userName)
