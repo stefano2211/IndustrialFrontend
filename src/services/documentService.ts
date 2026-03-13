@@ -8,7 +8,7 @@ export const documentService = {
             formData.append('knowledge_base_id', knowledgeBaseId)
         }
 
-        const response = await api.post('/upload', formData, {
+        const response = await api.post('/documents/upload', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -18,7 +18,7 @@ export const documentService = {
     },
 
     async getStatus(taskId: string) {
-        const response = await api.get(`/status/${taskId}`)
+        const response = await api.get(`/documents/status/${taskId}`)
         return response.data
     },
 

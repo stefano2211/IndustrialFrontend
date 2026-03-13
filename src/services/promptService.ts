@@ -4,9 +4,17 @@ export interface Prompt {
     id: string
     title: string
     description?: string
-    query: string
+    query?: string
     icon?: string
     is_enabled: boolean
+    system_prompt?: string
+    temperature?: number | null
+    max_tokens?: number | null
+    top_p?: number | null
+    top_k?: number | null
+    seed?: number | null
+    stop_sequence?: string
+    is_active?: boolean
     created_at: string
     updated_at: string
 }
@@ -14,17 +22,20 @@ export interface Prompt {
 export interface PromptCreate {
     title: string
     description?: string
-    query: string
-    icon?: string
-    is_enabled?: boolean
-}
-
-export interface PromptUpdate {
-    title?: string
-    description?: string
     query?: string
     icon?: string
     is_enabled?: boolean
+    system_prompt?: string
+    temperature?: number | null
+    max_tokens?: number | null
+    top_p?: number | null
+    top_k?: number | null
+    seed?: number | null
+    stop_sequence?: string
+}
+
+export interface PromptUpdate extends Partial<PromptCreate> {
+    is_active?: boolean
 }
 
 const promptService = {
@@ -41,6 +52,10 @@ const promptService = {
     async updatePrompt(id: string, prompt: PromptUpdate): Promise<Prompt> {
         const response = await api.patch(`/prompts/${id}`, prompt)
         return response.data
+    },
+
+    async setActive(id: string): Promise<void> {
+        await api.patch(`/prompts/${id}/active`)
     },
 
     async deletePrompt(id: string): Promise<void> {

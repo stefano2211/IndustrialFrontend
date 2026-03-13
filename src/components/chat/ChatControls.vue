@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import promptService, { type Prompt } from '@/services/promptService'
+
 interface ChatParams {
   system_prompt: string
   temperature: number | null
@@ -18,6 +21,70 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
+const savedPrompts = ref<Prompt[]>([])
+const isLoading = ref(false)
+const selectedPromptId = ref<string>('')
+const presetName = ref('')
+const isSaving = ref(false)
+
+onMounted(async () => {
+  await fetchPrompts()
+})
+
+async function fetchPrompts() {
+  try {
+    isLoading.value = true
+    savedPrompts.value = await promptService.listPrompts()
+    // Find active or first if none active? 
+    // For now just load the list
+  } catch (error) {
+    console.error('Error fetching prompts:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function applyPreset(promptId: string) {
+  const prompt = savedPrompts.value.find(p => p.id === promptId)
+  if (!prompt) return
+
+  props.params.system_prompt = prompt.system_prompt || ''
+  props.params.temperature = prompt.temperature ?? null
+  props.params.max_tokens = prompt.max_tokens ?? null
+  props.params.top_p = prompt.top_p ?? null
+  props.params.top_k = prompt.top_k ?? null
+  props.params.seed = prompt.seed ?? null
+  props.params.stop_sequence = prompt.stop_sequence || ''
+  
+  selectedPromptId.value = promptId
+}
+
+async function saveAsPreset() {
+  if (!presetName.value.trim()) return
+  
+  try {
+    isSaving.value = true
+    const newPreset = await promptService.createPrompt({
+      title: presetName.value,
+      system_prompt: props.params.system_prompt,
+      temperature: props.params.temperature,
+      max_tokens: props.params.max_tokens,
+      top_p: props.params.top_p,
+      top_k: props.params.top_k,
+      seed: props.params.seed,
+      stop_sequence: props.params.stop_sequence
+    })
+    
+    savedPrompts.value.push(newPreset)
+    selectedPromptId.value = newPreset.id
+    presetName.value = ''
+  } catch (error) {
+    console.error('Error saving preset:', error)
+  } finally {
+    isSaving.value = false
+  }
+}
+
 function resetAll() {
   props.params.system_prompt = ''
   props.params.temperature = null
@@ -26,10 +93,41 @@ function resetAll() {
   props.params.top_k = null
   props.params.seed = null
   props.params.stop_sequence = ''
+  selectedPromptId.value = ''
 }
 
 function formatValue(val: number | null): string {
   return val === null ? 'Default' : String(val)
+}
+
+function onPresetChange(e: Event) {
+  const target = e.target as HTMLSelectElement
+  applyPreset(target.value)
+}
+
+function onTemperatureInput(e: Event) {
+  const target = e.target as HTMLInputElement
+  props.params.temperature = parseFloat(target.value)
+}
+
+function onMaxTokensInput(e: Event) {
+  const target = e.target as HTMLInputElement
+  props.params.max_tokens = target.value ? parseInt(target.value) : null
+}
+
+function onTopPInput(e: Event) {
+  const target = e.target as HTMLInputElement
+  props.params.top_p = parseFloat(target.value)
+}
+
+function onTopKInput(e: Event) {
+  const target = e.target as HTMLInputElement
+  props.params.top_k = target.value ? parseInt(target.value) : null
+}
+
+function onSeedInput(e: Event) {
+  const target = e.target as HTMLInputElement
+  props.params.seed = target.value ? parseInt(target.value) : null
 }
 </script>
 
@@ -57,6 +155,48 @@ function formatValue(val: number | null): string {
         <!-- Scrollable Content -->
         <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5">
 
+          <!-- Presets -->
+          <div class="space-y-2">
+            <h3 class="text-[14px] font-semibold text-white">Presets</h3>
+            <div class="flex gap-2">
+              <select 
+                v-model="selectedPromptId"
+                @change="onPresetChange"
+                class="flex-1 bg-[#212121] border border-white/[0.08] rounded-xl px-3 py-2 text-[13px] text-white focus:outline-none focus:border-white/20 transition-colors"
+              >
+                <option value="">Manual Configuration</option>
+                <option v-for="prompt in savedPrompts" :key="prompt.id" :value="prompt.id">
+                  {{ prompt.title }}
+                </option>
+              </select>
+              <button 
+                @click="fetchPrompts"
+                class="p-2 text-[#7a7a7a] hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                title="Refresh presets"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+              </button>
+            </div>
+            
+            <div class="flex gap-2 pt-1">
+              <input 
+                v-model="presetName"
+                placeholder="New preset name"
+                class="flex-1 bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[12px] text-white placeholder-[#5a5a5a] focus:outline-none focus:border-white/20"
+                @keyup.enter="saveAsPreset"
+              />
+              <button 
+                @click="saveAsPreset"
+                :disabled="!presetName.trim() || isSaving"
+                class="px-2 py-1 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white text-[11px] font-medium rounded-lg transition-colors"
+              >
+                {{ isSaving ? 'Saving...' : 'Save Current' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="border-t border-white/[0.06]"></div>
+
           <!-- System Prompt -->
           <div class="space-y-2">
             <h3 class="text-[14px] font-semibold text-white">System Prompt</h3>
@@ -83,9 +223,9 @@ function formatValue(val: number | null): string {
                     type="range" 
                     min="0" max="2" step="0.1"
                     :value="params.temperature ?? 0"
-                    @input="(e) => params.temperature = parseFloat((e.target as HTMLInputElement).value)"
-                    class="w-24 h-1 accent-white bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
-                  >
+                    @input="onTemperatureInput"
+                    class="range-input"
+                  />
                   <button 
                     @click="params.temperature = null"
                     class="text-[12px] font-medium min-w-[55px] text-right"
@@ -103,10 +243,10 @@ function formatValue(val: number | null): string {
                   type="number" 
                   min="1" max="128000"
                   :value="params.max_tokens ?? ''"
-                  @input="(e) => { const v = (e.target as HTMLInputElement).value; params.max_tokens = v ? parseInt(v) : null }"
+                  @input="onMaxTokensInput"
                   placeholder="Default"
-                  class="w-24 bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[12px] text-right text-white placeholder-[#7a7a7a] focus:outline-none focus:border-white/20"
-                >
+                  class="number-input"
+                />
               </div>
 
               <!-- Top P -->
@@ -117,9 +257,9 @@ function formatValue(val: number | null): string {
                     type="range" 
                     min="0" max="1" step="0.05"
                     :value="params.top_p ?? 1"
-                    @input="(e) => params.top_p = parseFloat((e.target as HTMLInputElement).value)"
-                    class="w-24 h-1 accent-white bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
-                  >
+                    @input="onTopPInput"
+                    class="range-input"
+                  />
                   <button 
                     @click="params.top_p = null"
                     class="text-[12px] font-medium min-w-[55px] text-right"
@@ -137,10 +277,10 @@ function formatValue(val: number | null): string {
                   type="number" 
                   min="1" max="100"
                   :value="params.top_k ?? ''"
-                  @input="(e) => { const v = (e.target as HTMLInputElement).value; params.top_k = v ? parseInt(v) : null }"
+                  @input="onTopKInput"
                   placeholder="Default"
-                  class="w-24 bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[12px] text-right text-white placeholder-[#7a7a7a] focus:outline-none focus:border-white/20"
-                >
+                  class="number-input"
+                />
               </div>
 
               <!-- Seed -->
@@ -150,10 +290,10 @@ function formatValue(val: number | null): string {
                   type="number" 
                   min="0"
                   :value="params.seed ?? ''"
-                  @input="(e) => { const v = (e.target as HTMLInputElement).value; params.seed = v ? parseInt(v) : null }"
+                  @input="onSeedInput"
                   placeholder="Default"
-                  class="w-24 bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[12px] text-right text-white placeholder-[#7a7a7a] focus:outline-none focus:border-white/20"
-                >
+                  class="number-input"
+                />
               </div>
 
               <!-- Stop Sequence -->
@@ -163,8 +303,8 @@ function formatValue(val: number | null): string {
                   type="text"
                   v-model="params.stop_sequence"
                   placeholder="Default"
-                  class="w-24 bg-transparent border border-white/[0.08] rounded-lg px-2 py-1 text-[12px] text-right text-white placeholder-[#7a7a7a] focus:outline-none focus:border-white/20"
-                >
+                  class="number-input"
+                />
               </div>
 
             </div>
@@ -192,4 +332,43 @@ function formatValue(val: number | null): string {
 .slide-enter-active { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .slide-leave-active { transition: transform 0.2s ease-in; }
 .slide-enter-from, .slide-leave-to { transform: translateX(100%); }
+
+.range-input {
+  width: 6rem;
+  height: 0.25rem;
+  accent-color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  appearance: none;
+  cursor: pointer;
+}
+.range-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  background-color: white;
+  border-radius: 9999px;
+}
+
+.number-input {
+  width: 6rem;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 12px;
+  text-align: right;
+  color: white;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.number-input:focus {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.number-input::placeholder {
+  color: #7a7a7a;
+}
 </style>

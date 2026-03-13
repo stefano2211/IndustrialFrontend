@@ -105,9 +105,9 @@
               {{ formatDate(doc.created_at) }}
             </td>
             <td class="px-6 py-4 text-right flex items-center justify-end gap-3">
-              <span class="text-[11px] text-gray-500 bg-black/20 border border-white/5 px-2.5 py-1 rounded-md font-mono">{{ doc.file_id.substring(0, 8) }}</span>
+              <span class="text-[11px] text-gray-500 bg-black/20 border border-white/5 px-2.5 py-1 rounded-md font-mono">{{ doc.file_id?.substring(0, 8) }}</span>
               <button 
-                @click="deleteDocument(doc.file_id)"
+                @click="deleteDocument(doc.id)"
                 class="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
                 title="Eliminar documento"
               >

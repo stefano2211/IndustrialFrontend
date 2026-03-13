@@ -52,7 +52,7 @@ export const knowledgeService = {
         formData.append('knowledge_base_id', kbId)
 
         // Using backend's unified /upload endpoint handled in documents.py
-        const response = await api.post('/upload', formData, {
+        const response = await api.post('/documents/upload', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

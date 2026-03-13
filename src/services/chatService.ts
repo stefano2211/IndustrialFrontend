@@ -3,7 +3,7 @@ import api from './api'
 export const chatService = {
     // Non-streaming fallback
     async sendMessage(query: string, threadId?: string, knowledgeBaseId?: string) {
-        const response = await api.post('/chat', {
+        const response = await api.post('/ai/chat', {
             query,
             thread_id: threadId,
             knowledge_base_id: knowledgeBaseId
@@ -25,7 +25,7 @@ export const chatService = {
         const token = localStorage.getItem('token')
         const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-        const response = await fetch(`${baseURL}/chat/stream`, {
+        const response = await fetch(`${baseURL}/ai/chat/stream`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
