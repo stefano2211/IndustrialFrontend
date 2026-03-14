@@ -17,6 +17,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'new-chat'): void
   (e: 'select-conversation', threadId: string): void
+  (e: 'archive-conversation', threadId: string): void
+  (e: 'archive-action'): void
   (e: 'logout'): void
 }>()
 
@@ -49,9 +51,11 @@ function groupedConversations() {
 
 function getInitials(name: string): string {
   if (!name) return 'U'
-  const parts = name.trim().split(' ')
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
-  return name[0].toUpperCase()
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2 && parts[0]?.[0] && parts[1]?.[0]) {
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  }
+  return name[0] ? name[0].toUpperCase() : 'U'
 }
 </script>
 
@@ -62,17 +66,17 @@ function getInitials(name: string): string {
   >
     <!-- Logo & Title -->
     <div class="p-4 flex items-center justify-between">
-      <div class="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl cursor-pointer w-full text-sm font-medium transition-all group">
+      <div @click="emit('new-chat')" class="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl cursor-pointer w-full text-sm font-medium transition-all group">
         <div class="w-8 h-8 bg-white text-black font-bold rounded-lg flex items-center justify-center text-xs shadow-sm">
-          OI
+          {{ getInitials(userName) }}
         </div>
-        <span class="tracking-wide text-white whitespace-nowrap">Open WebUI</span>
+        <span class="tracking-wide text-white whitespace-nowrap">Aura AI</span>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-auto text-[#7a7a7a] group-hover:translate-x-0.5 transition-transform shrink-0"><path d="m9 18 6-6-6-6"/></svg>
       </div>
     </div>
 
     <!-- Scrollable Chat List -->
-    <div class="px-3 mt-1 flex-grow overflow-y-auto no-scrollbar">
+    <div class="px-3 mt-1 flex-grow overflow-y-auto custom-sidebar-scroll">
       
       <!-- Main Actions -->
       <div class="mb-4 space-y-0.5 mt-1">
@@ -112,17 +116,24 @@ function getInitials(name: string): string {
       <template v-for="(convs, dateLabel) in groupedConversations()" :key="dateLabel">
         <div class="text-[12px] font-medium text-[#7a7a7a] mb-1.5 px-3 mt-6 uppercase tracking-wide">{{ dateLabel }}</div>
         <div class="space-y-0.5 mb-2">
-          <button 
+          <div 
             v-for="conv in convs" 
             :key="conv.thread_id"
             @click="emit('select-conversation', conv.thread_id)"
-            class="w-full text-left px-3 py-2 text-[14px] rounded-xl truncate transition-colors flex items-center gap-3"
+            class="group w-full text-left px-3 py-2 text-[14px] rounded-xl truncate transition-colors flex items-center gap-3 cursor-pointer"
             :class="conv.thread_id === activeThreadId 
               ? 'bg-white/[0.08] text-[#ececec] font-medium' 
               : 'text-[#b4b4b4] hover:bg-white/[0.04] hover:text-[#ececec]'"
           >
-            <span class="truncate">{{ conv.title }}</span>
-          </button>
+            <span class="truncate flex-1">{{ conv.title }}</span>
+            <button 
+              @click.stop="emit('archive-conversation', conv.thread_id)"
+              class="shrink-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded-lg transition-all text-[#7a7a7a] hover:text-white"
+              title="Archive"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
+            </button>
+          </div>
         </div>
       </template>
       
@@ -149,8 +160,8 @@ function getInitials(name: string): string {
               <div>
                 <div class="text-[14px] font-semibold text-white">{{ userName || 'User' }}</div>
                 <div class="flex items-center gap-1.5 text-[12px] text-green-400">
-                  <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                  Active
+                  <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  Online
                 </div>
               </div>
             </div>
@@ -166,7 +177,7 @@ function getInitials(name: string): string {
               Settings
             </button>
             <button 
-              @click="showProfileMenu = false"
+              @click="showProfileMenu = false; $emit('archive-action')"
               class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>

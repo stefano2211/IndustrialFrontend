@@ -40,8 +40,9 @@ const chartHeight = 200
 const chartPadding = { top: 20, right: 20, bottom: 30, left: 10 }
 
 const chartPoints = computed(() => {
-  if (!data.value || data.value.daily_messages.length === 0) return ''
-  const msgs = data.value.daily_messages
+  const currentData = data.value
+  if (!currentData || !currentData.daily_messages || currentData.daily_messages.length === 0) return ''
+  const msgs = currentData.daily_messages
   const maxCount = Math.max(...msgs.map(m => m.count), 1)
   const w = chartWidth - chartPadding.left - chartPadding.right
   const h = chartHeight - chartPadding.top - chartPadding.bottom
@@ -54,8 +55,9 @@ const chartPoints = computed(() => {
 })
 
 const chartAreaPath = computed(() => {
-  if (!data.value || data.value.daily_messages.length === 0) return ''
-  const msgs = data.value.daily_messages
+  const currentData = data.value
+  if (!currentData || !currentData.daily_messages || currentData.daily_messages.length === 0) return ''
+  const msgs = currentData.daily_messages
   const maxCount = Math.max(...msgs.map(m => m.count), 1)
   const w = chartWidth - chartPadding.left - chartPadding.right
   const h = chartHeight - chartPadding.top - chartPadding.bottom
@@ -66,23 +68,33 @@ const chartAreaPath = computed(() => {
     return { x, y }
   })
 
+  if (points.length === 0) return ''
   const bottomY = chartPadding.top + h
-  let path = `M ${points[0].x},${bottomY}`
+  const firstPoint = points[0]
+  if (!firstPoint) return ''
+  let path = `M ${firstPoint.x},${bottomY}`
   points.forEach(p => { path += ` L ${p.x},${p.y}` })
-  path += ` L ${points[points.length - 1].x},${bottomY} Z`
+  const lastPoint = points[points.length - 1]
+  if (lastPoint) {
+    path += ` L ${lastPoint.x},${bottomY} Z`
+  }
   return path
 })
 
 const chartXLabels = computed(() => {
-  if (!data.value) return []
-  const msgs = data.value.daily_messages
+  const currentData = data.value
+  if (!currentData || !currentData.daily_messages) return []
+  const msgs = currentData.daily_messages
   const w = chartWidth - chartPadding.left - chartPadding.right
   // Show ~7 labels max
   const step = Math.max(1, Math.floor(msgs.length / 7))
-  return msgs.filter((_, i) => i % step === 0 || i === msgs.length - 1).map((m, idx, arr) => ({
-    label: formatDateLabel(m.date),
-    x: chartPadding.left + (msgs.indexOf(m) / Math.max(msgs.length - 1, 1)) * w,
-  }))
+  return msgs.filter((_, i) => i % step === 0 || i === msgs.length - 1).map((m) => {
+    const index = msgs.indexOf(m)
+    return {
+      label: formatDateLabel(m.date),
+      x: chartPadding.left + (index / Math.max(msgs.length - 1, 1)) * w,
+    }
+  })
 })
 
 function changeDays(val: number) {
@@ -158,7 +170,7 @@ onMounted(loadAnalytics)
           />
 
           <!-- Dots -->
-          <template v-if="data.daily_messages.length > 0">
+          <template v-if="data && data.daily_messages && data.daily_messages.length > 0">
             <circle
               v-for="(m, i) in data.daily_messages"
               :key="'dot-' + i"

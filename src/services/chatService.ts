@@ -3,7 +3,7 @@ import api from './api'
 export const chatService = {
     // Non-streaming fallback
     async sendMessage(query: string, threadId?: string, knowledgeBaseId?: string) {
-        const response = await api.post('/ai/chat', {
+        const response = await api.post('/chat/chat', {
             query,
             thread_id: threadId,
             knowledge_base_id: knowledgeBaseId
@@ -16,6 +16,7 @@ export const chatService = {
         query: string,
         threadId: string | undefined,
         knowledgeBaseId: string | undefined,
+        modelId: string | undefined,
         params: Record<string, any> | undefined,
         onToken: (token: string) => void,
         onMeta: (meta: { thread_id: string }) => void,
@@ -25,7 +26,7 @@ export const chatService = {
         const token = localStorage.getItem('token')
         const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-        const response = await fetch(`${baseURL}/ai/chat/stream`, {
+        const response = await fetch(`${baseURL}/chat/chat/stream`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -35,6 +36,7 @@ export const chatService = {
                 query,
                 thread_id: threadId,
                 knowledge_base_id: knowledgeBaseId,
+                model_id: modelId,
                 params: params || undefined,
             }),
         })

@@ -7,6 +7,7 @@ import { conversationService, type Conversation, type MessageItem } from '@/serv
 import { knowledgeService, type KnowledgeBase } from '@/services/knowledgeService'
 import modelService from '@/services/modelService'
 import api from '@/services/api'
+import { systemService } from '@/services/systemService'
 
 const router = useRouter()
 const isSidebarOpen = ref(true)
@@ -18,6 +19,16 @@ const userName = ref('')
 
 // Model state
 const orchestratorModel = ref('Cargando...')
+const activeUsers = ref(1)
+const showArchivedModal = ref(false)
+const archivedConversations = ref<Conversation[]>([])
+const isLoadingArchived = ref(false)
+
+// Models state
+const availableModels = ref<any[]>([])
+const activeModelId = ref<string | undefined>(undefined)
+const activeModelName = ref('Select Model')
+const showModelDropdown = ref(false)
 
 // Chat params (controlled by ChatControls drawer)
 const chatParams = reactive({
@@ -59,16 +70,74 @@ async function loadUserInfo() {
 // Load model info
 async function loadModelInfo() {
   try {
-    const configs = await modelService.listConfigs()
-    const orchestrator = configs.find(c => c.role === 'orchestrator')
-    if (orchestrator) {
-      orchestratorModel.value = orchestrator.model_name
-    } else {
-      orchestratorModel.value = 'gpt-4o'
+    const models = await modelService.listModels()
+    availableModels.value = models
+    
+    // Try to find a default (first one or orchestrator)
+    if (models.length > 0 && !activeModelId.value) {
+      const orchestrator = models.find(m => m.id === 'orchestrator' || m.name.toLowerCase().includes('orchestrator'))
+      const defaultModel = orchestrator || models[0]
+      if (defaultModel) {
+        activeModelId.value = defaultModel.id
+        activeModelName.value = defaultModel.name
+      }
+    } else if (models.length > 0 && activeModelId.value) {
+      // Sync activeModelName if activeModelId is already set
+      const current = models.find(m => m.id === activeModelId.value)
+      if (current) {
+        activeModelName.value = current.name
+      }
     }
   } catch (error) {
     console.error('Failed to load model info', error)
-    orchestratorModel.value = 'Error'
+    if (availableModels.value.length === 0) {
+      activeModelName.value = 'Error'
+    }
+  }
+}
+
+async function toggleModelDropdown() {
+  showModelDropdown.value = !showModelDropdown.value
+  if (showModelDropdown.value) {
+    await loadModelInfo()
+  }
+}
+
+function selectModel(model: any) {
+  activeModelId.value = model.id
+  activeModelName.value = model.name
+  showModelDropdown.value = false
+}
+
+async function loadStats() {
+  try {
+    const stats = await systemService.getStats()
+    activeUsers.value = stats.active_users
+  } catch (error) {
+    console.error('Failed to load stats', error)
+  }
+}
+
+async function handleOpenArchived() {
+  isHeaderMenuOpen.value = false
+  showArchivedModal.value = true
+  isLoadingArchived.value = true
+  try {
+    archivedConversations.value = await conversationService.listArchived()
+  } catch (error) {
+    console.error('Failed to load archived conversations', error)
+  } finally {
+    isLoadingArchived.value = false
+  }
+}
+
+async function handleUnarchive(threadId: string) {
+  try {
+    await conversationService.archive(threadId, false)
+    archivedConversations.value = archivedConversations.value.filter(c => c.thread_id !== threadId)
+    loadConversations()
+  } catch (error) {
+    console.error('Failed to unarchive', error)
   }
 }
 
@@ -131,6 +200,20 @@ function handleLogout() {
   router.push('/login')
 }
 
+async function handleArchiveConversation(threadId: string) {
+  try {
+    await conversationService.archive(threadId)
+    // Refresh conversations but stay on current page
+    loadConversations()
+    // If we're archiving the active thread, we might want to go to a new chat
+    if (activeThreadId.value === threadId) {
+      handleNewChat()
+    }
+  } catch (error) {
+    console.error('Failed to archive conversation', error)
+  }
+}
+
 // Called by ChatView after sending a message
 function handleMessageSent(threadId: string, _userMsg: MessageItem, _assistantMsg: MessageItem) {
   if (!activeThreadId.value) {
@@ -141,6 +224,7 @@ function handleMessageSent(threadId: string, _userMsg: MessageItem, _assistantMs
 
 // Provide state to child components
 provide('activeThreadId', activeThreadId)
+provide('activeModelId', activeModelId)
 provide('activeMessages', activeMessages)
 provide('isLoadingMessages', isLoadingMessages)
 provide('onMessageSent', handleMessageSent)
@@ -157,6 +241,9 @@ onMounted(() => {
   loadConversations()
   loadKnowledgeBases()
   loadModelInfo()
+  loadStats()
+  // Refresh stats every minute
+  setInterval(loadStats, 60000)
 })
 </script>
 
@@ -169,6 +256,8 @@ onMounted(() => {
       :user-name="userName"
       @new-chat="handleNewChat"
       @select-conversation="handleSelectConversation"
+      @archive-conversation="handleArchiveConversation"
+      @archive-action="handleOpenArchived"
       @logout="handleLogout"
     />
 
@@ -188,10 +277,43 @@ onMounted(() => {
           
           <slot name="header">
             <div class="ml-3 flex items-center gap-3 relative">
-              <div @click="router.push('/workspace/models')" class="flex items-center gap-2 text-lg font-medium cursor-pointer hover:bg-white/5 px-3 py-1.5 rounded-xl transition-colors group text-white">
-                {{ orchestratorModel }}
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#7a7a7a] group-hover:text-[#b4b4b4] mt-0.5 opacity-0 group-hover:opacity-100 transition-all"><path d="m6 9 6 6 6-6"/></svg>
+              <div 
+                @click="toggleModelDropdown" 
+                class="flex items-center gap-2 text-lg font-medium cursor-pointer hover:bg-white/5 px-3 py-1.5 rounded-xl transition-colors group text-white"
+              >
+                {{ activeModelName }}
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#7a7a7a] group-hover:text-[#b4b4b4] mt-0.5 transition-all" :class="{ 'rotate-180': showModelDropdown }"><path d="m6 9 6 6 6-6"/></svg>
               </div>
+
+              <!-- Model Selector Dropdown -->
+              <Teleport to="body">
+                <Transition name="dropdown">
+                  <div v-if="showModelDropdown" class="fixed top-14 left-16 w-64 bg-[#2f2f2f] rounded-2xl shadow-2xl border border-white/[0.08] z-[10000] overflow-hidden">
+                    <div class="p-2 space-y-1 max-h-[400px] overflow-y-auto custom-scrollbar">
+                      <div class="px-3 py-1.5 text-[11px] font-semibold text-[#7a7a7a] uppercase tracking-wider">Available Models</div>
+                      <button 
+                        v-for="model in availableModels" 
+                        :key="model.id"
+                        @click="selectModel(model)"
+                        class="flex items-center gap-3 w-full px-3 py-2 text-[13px] rounded-lg transition-colors"
+                        :class="activeModelId === model.id ? 'bg-white/10 text-white' : 'text-[#ececec] hover:bg-white/5'"
+                      >
+                        <div class="w-2 h-2 rounded-full" :class="activeModelId === model.id ? 'bg-indigo-400' : 'bg-[#7a7a7a]'"></div>
+                        <span class="truncate">{{ model.name }}</span>
+                      </button>
+                      <div class="border-t border-white/[0.05] mt-2 pt-2">
+                        <button 
+                          @click="showModelDropdown = false; router.push('/workspace/models')" 
+                          class="flex items-center gap-3 w-full px-3 py-2 text-[13px] text-indigo-400 hover:bg-white/5 rounded-lg transition-colors"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                          Manage Models
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </Transition>
+              </Teleport>
             </div>
           </slot>
         </div>
@@ -221,36 +343,38 @@ onMounted(() => {
             </button>
 
             <!-- Dropdown menu -->
-            <Transition name="dropdown">
-              <div v-if="isHeaderMenuOpen" class="absolute top-full right-0 mt-2 w-56 bg-[#2f2f2f] rounded-2xl shadow-2xl border border-white/[0.08] overflow-hidden z-50">
-                <div class="py-1.5">
-                  <button @click="isHeaderMenuOpen = false; router.push('/admin/settings')" class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                    Settings
-                  </button>
-                  <button @click="isHeaderMenuOpen = false" class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
-                    Archived Chats
-                  </button>
-                  <button @click="isHeaderMenuOpen = false; router.push('/admin/users')" class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    Admin Panel
-                  </button>
-                </div>
-                <div class="border-t border-white/[0.06] py-1.5">
-                  <button @click="isHeaderMenuOpen = false; handleLogout()" class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                    Sign Out
-                  </button>
-                </div>
-                <div class="border-t border-white/[0.06] px-4 py-2.5">
-                  <div class="flex items-center gap-2 text-[12px] text-[#7a7a7a]">
-                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                    Active Users: 1
+            <Teleport to="body">
+              <Transition name="dropdown">
+                <div v-if="isHeaderMenuOpen" class="fixed top-14 right-4 w-64 bg-[#2f2f2f] rounded-2xl shadow-2xl border border-white/[0.08] z-[10000]">
+                  <div class="py-1.5">
+                    <button @click="isHeaderMenuOpen = false; router.push('/admin/settings')" class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                      Settings
+                    </button>
+                    <button @click="handleOpenArchived" class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
+                      Archived Chats
+                    </button>
+                    <button @click="isHeaderMenuOpen = false; router.push('/admin/users')" class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                      Admin Panel
+                    </button>
+                  </div>
+                  <div class="border-t border-white/[0.06] py-1.5">
+                    <button @click="isHeaderMenuOpen = false; handleLogout()" class="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#ececec] hover:bg-white/5 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                      Sign Out
+                    </button>
+                  </div>
+                  <div class="border-t border-white/[0.06] px-4 py-2.5">
+                    <div class="flex items-center gap-2 text-[12px] text-[#7a7a7a]">
+                      <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      Active Users: {{ activeUsers }}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Transition>
+              </Transition>
+            </Teleport>
           </div>
         </div>
       </header>
@@ -268,9 +392,49 @@ onMounted(() => {
       @close="isControlsOpen = false"
     />
 
-    <!-- Click outside to close header dropdown -->
+    <!-- Click outside to close header dropdowns -->
     <Teleport to="body">
-      <div v-if="isHeaderMenuOpen" class="fixed inset-0 z-30" @click="isHeaderMenuOpen = false"></div>
+      <div v-if="isHeaderMenuOpen || showModelDropdown" class="fixed inset-0 z-30" @click="isHeaderMenuOpen = false; showModelDropdown = false"></div>
+    </Teleport>
+
+    <!-- Archived Chats Modal -->
+    <Teleport to="body">
+      <div v-if="showArchivedModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div class="bg-[#2f2f2f] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-white">Archived Chats</h3>
+            <button @click="showArchivedModal = false" class="text-[#7a7a7a] hover:text-white transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+
+          <div class="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+            <div v-if="isLoadingArchived" class="py-12 flex justify-center">
+              <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
+            </div>
+            <div v-else-if="archivedConversations.length === 0" class="py-12 text-center text-[#7a7a7a]">
+              No archived chats found.
+            </div>
+            <div 
+              v-for="conv in archivedConversations" 
+              :key="conv.thread_id"
+              class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/[0.05] hover:border-white/10 transition-all group"
+            >
+              <div class="truncate mr-4">
+                <div class="text-[14px] text-white font-medium truncate">{{ conv.title }}</div>
+                <div class="text-[11px] text-[#7a7a7a]">{{ new Date(conv.updated_at).toLocaleDateString() }}</div>
+              </div>
+              <button 
+                @click="handleUnarchive(conv.thread_id)"
+                class="shrink-0 p-2 text-[#7a7a7a] hover:text-white hover:bg-white/5 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                title="Unarchive"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </Teleport>
   </div>
 </template>

@@ -1,36 +1,48 @@
 import api from './api'
 
-export interface ModelConfig {
-    role: string
-    provider: string
-    model_name: string
+export interface Model {
+    id: string
+    name: string
+    base_model_id: string
+    description?: string
+    tags: string[]
+    system_prompt?: string
+    params: Record<string, any>
+    knowledge_ids: number[]
+    tool_ids: number[]
+    skill_ids: number[]
+    capabilities: Record<string, boolean>
+    default_features: Record<string, boolean>
+    builtin_tools: Record<string, boolean>
+    tts_voice?: string
 }
 
-export interface ModelConfigUpdate {
-    provider?: string
-    model_name?: string
-}
+export type ModelCreate = Model
+export type ModelUpdate = Partial<Model>
 
 const modelService = {
-    async listConfigs(): Promise<ModelConfig[]> {
+    async listModels(): Promise<Model[]> {
         const response = await api.get('/models/')
         return response.data
     },
 
-    async getConfig(role: string): Promise<ModelConfig> {
-        const response = await api.get(`/models/${role}`)
+    async getModel(id: string): Promise<Model> {
+        const response = await api.get(`/models/${id}`)
         return response.data
     },
 
-    async setConfig(role: string, config: ModelConfigUpdate): Promise<ModelConfig> {
-        // Use PUT for set_config
-        const response = await api.put(`/models/${role}`, config)
+    async createModel(model: ModelCreate): Promise<Model> {
+        const response = await api.post('/models/', model)
         return response.data
     },
 
-    async updateConfig(role: string, config: ModelConfigUpdate): Promise<ModelConfig> {
-        const response = await api.patch(`/models/${role}`, config)
+    async updateModel(id: string, model: ModelUpdate): Promise<Model> {
+        const response = await api.put(`/models/${id}`, model)
         return response.data
+    },
+
+    async deleteModel(id: string): Promise<void> {
+        await api.delete(`/models/${id}`)
     }
 }
 

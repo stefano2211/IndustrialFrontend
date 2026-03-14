@@ -102,52 +102,68 @@ watch([prompts, searchQuery], () => {
 </script>
 
 <template>
-  <div class="p-8 max-w-5xl mx-auto">
+  <div class="h-full flex flex-col pt-4 overflow-hidden">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="px-8 mb-6 flex items-center justify-between shrink-0">
       <div class="flex items-center gap-3">
         <h2 class="text-xl font-semibold text-white">Prompts</h2>
         <span class="text-[14px] text-[#7a7a7a] font-medium">{{ prompts.length }}</span>
       </div>
       <button 
         @click="openCreateModal"
-        class="bg-white text-black px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 text-[13px]"
+        class="bg-white text-black px-4 py-2 rounded-xl font-semibold hover:bg-gray-200 transition-colors flex items-center gap-2 text-[13px]"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
         New Prompt
       </button>
     </div>
 
-    <!-- Search -->
-    <div class="relative mb-6">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-[#7a7a7a]"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input 
-        v-model="searchQuery"
-        type="text" 
-        placeholder="Search Prompts" 
-        class="w-full bg-transparent border border-white/[0.08] rounded-xl pl-11 pr-4 py-2.5 text-[14px] text-[#ececec] placeholder-[#7a7a7a] focus:outline-none focus:border-white/20 transition-colors"
-      >
+    <!-- Search Section -->
+    <div class="px-8 mb-6 shrink-0">
+      <div class="relative group">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-[#7a7a7a] group-focus-within:text-white transition-colors"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <div class="absolute left-11 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+          <button class="bg-[#2f2f2f] text-[11px] text-[#7a7a7a] px-2 py-0.5 rounded cursor-default border border-white/5 pointer-events-auto hover:text-white">All Prompts</button>
+        </div>
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Search Prompts" 
+          class="w-full bg-[#2f2f2f]/30 border border-white/[0.06] rounded-xl pl-[112px] pr-4 py-3 text-[14px] text-[#ececec] placeholder-[#7a7a7a] focus:outline-none focus:border-white/10 focus:bg-[#2f2f2f]/50 transition-all"
+        >
+      </div>
     </div>
 
-    <!-- Loading -->
-    <div v-if="isLoading" class="flex justify-center items-center py-20">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-    </div>
+    <!-- Content Area -->
+    <div class="flex-1 overflow-y-auto px-8 pb-12 custom-scrollbar">
+      <!-- Loading -->
+      <div v-if="isLoading" class="flex justify-center items-center py-20">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
 
-    <!-- Empty -->
-    <div v-else-if="filteredPrompts.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
-      <div class="text-4xl mb-4">🤔</div>
-      <h3 class="text-[16px] font-medium text-white mb-2">No prompts found</h3>
-      <p class="text-[#7a7a7a] text-[14px]">{{ searchQuery ? 'Try adjusting your search.' : 'Create your first prompt to help users get started.' }}</p>
-    </div>
+      <!-- Empty -->
+      <div v-else-if="filteredPrompts.length === 0" class="flex flex-col items-center justify-center py-32 text-center">
+        <div class="text-4xl mb-4">🧐</div>
+        <h3 class="text-lg font-medium text-white mb-2">{{ searchQuery ? 'No results found' : 'No prompts found' }}</h3>
+        <p class="text-[14px] text-[#7a7a7a] mb-8 max-w-sm">
+          {{ searchQuery ? 'Try adjusting your search to find the prompt you need.' : 'Create your first prompt to help users get standard responses quickly.' }}
+        </p>
+        <button 
+          v-if="!searchQuery"
+          @click="openCreateModal"
+          class="text-[13px] font-bold bg-white/5 hover:bg-white/10 text-white border border-white/10 px-6 py-2.5 rounded-xl transition-all"
+        >
+          New Prompt
+        </button>
+      </div>
 
-    <!-- Grid -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div 
-        v-for="prompt in filteredPrompts" 
-        :key="prompt.id"
-        class="p-5 bg-[#2f2f2f]/40 rounded-2xl border border-white/[0.06] hover:border-white/10 transition-all flex flex-col group"
-      >
+      <!-- Grid -->
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div 
+          v-for="prompt in filteredPrompts" 
+          :key="prompt.id"
+          class="p-5 bg-[#2f2f2f]/30 rounded-2xl border border-white/[0.06] hover:bg-[#2f2f2f]/50 hover:border-white/10 transition-all flex flex-col group relative h-48"
+        >
         <div class="flex items-start justify-between mb-3">
           <div class="flex items-center gap-3">
             <div class="p-2 bg-[#212121] rounded-lg text-[#b4b4b4] border border-white/[0.06]" v-html="prompt.icon || '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\'/></svg>'"></div>
@@ -177,8 +193,9 @@ watch([prompts, searchQuery], () => {
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Modal -->
+  <!-- Modal -->
     <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="isModalOpen = false"></div>
       <div class="bg-[#2f2f2f] border border-white/10 rounded-2xl w-full max-w-md relative z-10 overflow-hidden shadow-2xl">

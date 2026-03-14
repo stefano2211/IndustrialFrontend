@@ -47,6 +47,11 @@ export interface SystemSettingsGeneral {
     feature_enable_api_keys: boolean
     feature_jwt_expiration: string
     feature_enable_community_sharing: boolean
+    ollama_enabled: boolean
+    ollama_base_url: string
+    openrouter_enabled: boolean
+    openrouter_api_key?: string
+    openrouter_base_url: string
 }
 
 export interface SystemSettings {

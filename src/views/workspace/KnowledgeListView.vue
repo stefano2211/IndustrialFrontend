@@ -1,57 +1,58 @@
 <template>
-  <div class="p-8 max-w-5xl mx-auto relative min-h-full">
-    <div class="space-y-6 animate-in">
-      <!-- Section Header -->
-      <header class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <h2 class="text-xl font-semibold text-white">Knowledge</h2>
-          <span class="text-[14px] text-[#7a7a7a] font-medium">{{ filteredCollections.length }}</span>
+  <div class="h-full flex flex-col pt-4 overflow-hidden">
+    <!-- Section Header -->
+    <header class="px-8 mb-6 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <h2 class="text-xl font-semibold text-white">Knowledge</h2>
+        <span class="text-[14px] text-[#7a7a7a] font-medium">{{ filteredCollections.length }}</span>
+      </div>
+
+      <button 
+        @click="showCreateModal = true"
+        class="flex items-center gap-2 bg-white text-black hover:bg-gray-200 font-semibold px-4 py-2 rounded-xl transition-colors shrink-0 text-[13px]"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        Create Collection
+      </button>
+    </header>
+
+    <!-- Search Section -->
+    <div class="px-8 mb-6 shrink-0">
+      <div class="relative group">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-[#7a7a7a] group-focus-within:text-white transition-colors"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <div class="absolute left-11 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+          <button class="bg-[#2f2f2f] text-[11px] text-[#7a7a7a] px-2 py-0.5 rounded cursor-default border border-white/5 pointer-events-auto hover:text-white">All Documents</button>
         </div>
-
-        <button 
-          @click="showCreateModal = true"
-          class="flex items-center gap-2 bg-white text-black hover:bg-gray-200 font-medium px-4 py-2 rounded-xl transition-colors shrink-0 text-[13px]"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-          Create Collection
-        </button>
-      </header>
-
-      <!-- Search -->
-      <div class="relative">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-[#7a7a7a]"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         <input 
           v-model="searchQuery"
           type="text" 
           placeholder="Search Knowledge" 
-          class="w-full bg-transparent border border-white/[0.08] rounded-xl pl-11 pr-4 py-2.5 text-[14px] text-[#ececec] placeholder-[#7a7a7a] focus:outline-none focus:border-white/20 transition-colors"
+          class="w-full bg-[#2f2f2f]/30 border border-white/[0.06] rounded-xl pl-[124px] pr-4 py-3 text-[14px] text-[#ececec] placeholder-[#7a7a7a] focus:outline-none focus:border-white/10 focus:bg-[#2f2f2f]/50 transition-all"
         >
       </div>
+    </div>
 
+    <!-- Content Area -->
+    <div class="flex-1 overflow-y-auto px-8 pb-12 custom-scrollbar">
       <!-- Loading -->
-      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="i in 3" :key="i" class="bg-white/5 border border-white/[0.06] rounded-2xl h-36 animate-pulse"></div>
+      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div v-for="i in 4" :key="i" class="bg-white/5 border border-white/[0.06] rounded-2xl h-48 animate-pulse"></div>
       </div>
 
-      <!-- Empty -->
-      <div v-else-if="filteredCollections.length === 0 && !searchQuery" class="flex flex-col items-center justify-center py-20 px-4 text-center">
-        <div class="text-4xl mb-4">🤔</div>
-        <h3 class="text-[16px] font-semibold text-white mb-2">No knowledge found</h3>
-        <p class="text-[#7a7a7a] text-[14px] mb-6 max-w-sm">Create your first knowledge collection to group documents together.</p>
+      <!-- Empty / No results -->
+      <div v-else-if="filteredCollections.length === 0" class="flex flex-col items-center justify-center py-32 text-center">
+        <div class="text-4xl mb-4">🧐</div>
+        <h3 class="text-lg font-medium text-white mb-2">{{ searchQuery ? 'No results found' : 'No knowledge found' }}</h3>
+        <p class="text-[14px] text-[#7a7a7a] mb-8 max-w-sm">
+          {{ searchQuery ? 'Try adjusting your search or filter to find what you are looking for.' : 'Create your first knowledge collection to group documents and retrieve them in your chats.' }}
+        </p>
         <button 
+          v-if="!searchQuery"
           @click="showCreateModal = true"
-          class="text-[13px] font-medium border border-white/10 hover:bg-white/5 text-white px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2"
+          class="text-[13px] font-bold bg-white/5 hover:bg-white/10 text-white border border-white/10 px-6 py-2.5 rounded-xl transition-all"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-          Create Collection
+          New Collection
         </button>
-      </div>
-
-      <!-- Search empty -->
-      <div v-else-if="filteredCollections.length === 0 && searchQuery" class="flex flex-col items-center justify-center py-20 text-center">
-        <div class="text-4xl mb-4">🤔</div>
-        <h3 class="text-[16px] font-semibold text-white mb-2">No results found</h3>
-        <p class="text-[#7a7a7a] text-[14px]">Try adjusting your search or filter to find what you are looking for.</p>
       </div>
 
       <!-- Grid -->
@@ -60,26 +61,28 @@
           v-for="kb in filteredCollections" 
           :key="kb.id"
           :to="{ name: 'knowledge-detail', params: { id: kb.id } }"
-          class="group bg-[#2f2f2f]/40 hover:bg-[#2f2f2f]/70 border border-white/[0.06] rounded-2xl p-5 transition-all cursor-pointer relative flex flex-col h-48 overflow-hidden"
+          class="group bg-[#2f2f2f]/30 hover:bg-[#2f2f2f]/50 border border-white/[0.06] rounded-2xl p-5 transition-all cursor-pointer relative flex flex-col h-48 overflow-hidden hover:border-white/10"
         >
           <div class="flex items-start justify-between mb-4 relative z-10">
-            <div class="w-10 h-10 rounded-xl bg-[#212121] flex items-center justify-center border border-white/[0.06]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#b4b4b4]"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+            <div class="w-10 h-10 rounded-xl bg-[#171717] flex items-center justify-center border border-white/[0.06] group-hover:border-white/10 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#b4b4b4] group-hover:text-white transition-colors"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
             </div>
             <button @click.prevent="deleteKb(kb.id)" class="text-[#7a7a7a] hover:text-red-400 p-1.5 hover:bg-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
             </button>
           </div>
           
-          <h3 class="font-semibold text-[15px] text-white mb-1 leading-tight truncate">{{ kb.name }}</h3>
-          <p class="text-[#7a7a7a] text-[13px] line-clamp-2 mb-4 flex-grow">{{ kb.description || 'No description' }}</p>
+          <h3 class="font-semibold text-[15px] text-white mb-1.5 leading-tight truncate tracking-tight">{{ kb.name }}</h3>
+          <p class="text-[#7a7a7a] text-[13px] line-clamp-2 mb-4 flex-grow leading-relaxed">{{ kb.description || 'No description provided for this collection.' }}</p>
           
-          <div class="text-[12px] text-[#7a7a7a] mt-auto font-medium">
+          <div class="text-[11px] text-[#7a7a7a] mt-auto font-bold uppercase tracking-widest flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="21" y2="9"/></svg>
             {{ formatDate(kb.created_at) }}
           </div>
         </router-link>
       </div>
     </div>
+  </div>
 
     <!-- Create Modal -->
     <Teleport to="body">
@@ -134,7 +137,6 @@
         </div>
       </div>
     </Teleport>
-  </div>
 </template>
 
 <script setup lang="ts">

@@ -4,6 +4,7 @@ export interface Conversation {
     id: string
     thread_id: string
     title: string
+    is_archived: boolean
     created_at: string
     updated_at: string
 }
@@ -31,5 +32,14 @@ export const conversationService = {
 
     async remove(threadId: string): Promise<void> {
         await api.delete(`/conversations/${threadId}`)
+    },
+
+    async archive(threadId: string, archive: boolean = true): Promise<void> {
+        await api.patch(`/conversations/${threadId}/archive?archive=${archive}`)
+    },
+
+    async listArchived(): Promise<Conversation[]> {
+        const response = await api.get('/conversations?include_archived=true')
+        return (response.data as Conversation[]).filter(c => c.is_archived)
     }
 }

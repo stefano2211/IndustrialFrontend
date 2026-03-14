@@ -2,12 +2,14 @@
 import { inject, ref, watch, nextTick, type Ref } from 'vue'
 import WelcomeState from '@/components/chat/WelcomeState.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
+import MarkdownRenderer from '@/components/chat/MarkdownRenderer.vue'
 import { chatService } from '@/services/chatService'
 import type { MessageItem } from '@/services/conversationService'
 
 // Injected from MainLayout
 const activeThreadId = inject<Ref<string | null>>('activeThreadId', ref(null))
 const activeKnowledgeBaseId = inject<Ref<string | null>>('activeKnowledgeBaseId', ref(null))
+const activeModelId = inject<Ref<string | undefined>>('activeModelId', ref(undefined))
 const activeMessages = inject<Ref<MessageItem[]>>('activeMessages', ref([]))
 const isLoadingMessages = inject<Ref<boolean>>('isLoadingMessages', ref(false))
 const onMessageSent = inject<(threadId: string, userMsg: MessageItem, assistantMsg: MessageItem) => void>('onMessageSent', () => {})
@@ -57,6 +59,7 @@ async function handleSendMessage(content: string) {
       content,
       activeThreadId.value || undefined,
       activeKnowledgeBaseId.value || undefined,
+      activeModelId.value,
       Object.keys(params).length > 0 ? params : undefined,
       // onToken
       (token: string) => {
@@ -136,7 +139,7 @@ function copyMessage(content: string) {
         >
           <!-- User Message — right aligned bubble, no avatar -->
           <div v-if="msg.role === 'user'" class="flex justify-end mb-6">
-            <div class="bg-[#2f2f2f] text-[#ececec] px-5 py-3 rounded-3xl rounded-br-lg max-w-[80%] text-[15px] leading-[1.7]">
+            <div class="bg-[#2f2f2f] text-[#ececec] px-5 py-3 rounded-xl rounded-br-sm max-w-[80%] text-[15px] leading-[1.7] border border-white/[0.03]">
               <div class="whitespace-pre-wrap">{{ msg.content }}</div>
             </div>
           </div>
@@ -150,7 +153,7 @@ function copyMessage(content: string) {
               <span class="text-[14px] font-medium text-white">Aura AI</span>
             </div>
             <div class="pl-10">
-              <div class="text-[15px] text-[#ececec] leading-[1.8] whitespace-pre-wrap">{{ msg.content }}</div>
+              <MarkdownRenderer :content="msg.content" />
               <!-- Action Icons -->
               <div class="flex items-center gap-0.5 mt-3 -ml-1.5">
                 <button @click="copyMessage(msg.content)" class="p-1.5 text-[#7a7a7a] hover:text-white hover:bg-white/5 rounded-lg transition-colors" title="Copy">
@@ -176,7 +179,10 @@ function copyMessage(content: string) {
             <span class="text-[14px] font-medium text-white">Aura AI</span>
           </div>
           <div class="pl-10">
-            <div v-if="streamingContent" class="text-[15px] text-[#ececec] leading-[1.8] whitespace-pre-wrap">{{ streamingContent }}<span class="inline-block w-[2px] h-[18px] bg-white/60 ml-0.5 animate-pulse align-text-bottom"></span></div>
+            <div v-if="streamingContent">
+              <MarkdownRenderer :content="streamingContent" />
+              <div class="inline-block w-[2px] h-[18px] bg-white/60 ml-0.5 animate-pulse align-text-bottom"></div>
+            </div>
             <div v-else class="flex items-center gap-2 py-2">
               <div class="flex items-center gap-1">
                 <div class="w-2 h-2 bg-[#7a7a7a] rounded-full animate-bounce [animation-duration:0.8s]"></div>
