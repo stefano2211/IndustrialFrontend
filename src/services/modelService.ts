@@ -43,6 +43,16 @@ const modelService = {
 
     async deleteModel(id: string): Promise<void> {
         await api.delete(`/models/${id}`)
+    },
+
+    async listProviders(): Promise<any[]> {
+        const response = await api.get('/models/discovery/providers')
+        return response.data
+    },
+
+    async listProviderModels(providerId: string): Promise<any[]> {
+        const response = await api.get(`/models/discovery/models/${providerId}`)
+        return response.data
     }
 }
 

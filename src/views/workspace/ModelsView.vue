@@ -17,11 +17,32 @@ const viewMode = ref<'list' | 'detail'>('list')
 const knowledgeBases = ref<any[]>([])
 const availableTools = ref<any[]>([])
 
-const providers = ['openai', 'anthropic', 'google', 'ollama', 'openrouter', 'xAI']
+const availableProviders = ref<any[]>([])
+const providerModels = ref<any[]>([])
+const selectedProviderId = ref('')
 
 onMounted(async () => {
   await fetchData()
+  await fetchProviders()
 })
+
+async function fetchProviders() {
+  try {
+    availableProviders.value = await modelService.listProviders()
+  } catch (error) {
+    console.error('Error fetching providers:', error)
+  }
+}
+
+async function fetchProviderModels(providerId: string) {
+  if (!providerId) return
+  try {
+    providerModels.value = await modelService.listProviderModels(providerId)
+  } catch (error) {
+    console.error(`Error fetching models for ${providerId}:`, error)
+    providerModels.value = []
+  }
+}
 
 async function fetchData() {
   try {
@@ -50,6 +71,17 @@ const filteredModels = computed(() => {
 
 function selectModel(model: Model) {
   currentModel.value = JSON.parse(JSON.stringify(model))
+  
+  // Parse provider from base_model_id (format "provider:model_id")
+  if (currentModel.value?.base_model_id.includes(':')) {
+    const [pId] = currentModel.value.base_model_id.split(':')
+    selectedProviderId.value = pId
+    fetchProviderModels(pId)
+  } else {
+    selectedProviderId.value = currentModel.value?.base_model_id || ''
+    if (selectedProviderId.value) fetchProviderModels(selectedProviderId.value)
+  }
+  
   viewMode.value = 'detail'
 }
 
@@ -110,7 +142,11 @@ async function handleSave() {
   
   try {
     isSaving.value = true
-    if (models.value.some(m => m.id === currentModel.value?.id)) {
+    isSaving.value = true
+    // Check if the model has a non-empty ID and exists in our list
+    const exists = currentModel.value.id && models.value.some(m => m.id === currentModel.value?.id)
+    
+    if (exists) {
       await modelService.updateModel(currentModel.value.id, currentModel.value)
     } else {
       await modelService.createModel(currentModel.value)
@@ -267,18 +303,42 @@ function toggleModelActive(model: Model) {
           
           <div class="mt-6 grid grid-cols-2 gap-x-8 gap-y-4">
             <div>
-              <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Base Architecture</label>
+              <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Provider</label>
               <div class="relative">
-                <select v-model="currentModel.base_model_id" class="w-full bg-white/03 border border-white/5 rounded-lg px-3 py-2 text-xs font-semibold text-gray-300 appearance-none focus:outline-none focus:border-white/10 transition-all cursor-pointer">
-                   <option v-for="p in providers" :key="p" :value="p" class="bg-[#171717]">{{ p === 'xAI' ? 'Grok v1.5 Pro' : p }}</option>
+                <select 
+                  v-model="selectedProviderId" 
+                  @change="fetchProviderModels(selectedProviderId)"
+                  class="w-full bg-white/03 border border-white/5 rounded-lg px-3 py-2 text-xs font-semibold text-gray-300 appearance-none focus:outline-none focus:border-white/10 transition-all cursor-pointer"
+                >
+                   <option value="" disabled>Select Provider</option>
+                   <option v-for="p in availableProviders" :key="p.id" :value="p.id" class="bg-[#171717]">{{ p.name }}</option>
                 </select>
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600"><path d="m6 9 6 6 6-6"/></svg>
               </div>
             </div>
             
             <div>
-              <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Primary Tags</label>
-              <input class="w-full bg-white/03 border border-white/5 rounded-lg px-3 py-2 text-xs text-gray-400 placeholder:text-gray-700 focus:outline-none focus:border-white/10 transition-all" placeholder="ai, assistant, coding...">
+              <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Base Model</label>
+              <div class="relative">
+                <select 
+                  v-model="currentModel.base_model_id" 
+                  class="w-full bg-white/03 border border-white/5 rounded-lg px-3 py-2 text-xs font-semibold text-gray-300 appearance-none focus:outline-none focus:border-white/10 transition-all cursor-pointer shadow-xl"
+                >
+                   <option value="" disabled>Select Model</option>
+                   <option 
+                     v-for="m in providerModels" 
+                     :key="m.id" 
+                     :value="selectedProviderId === 'ollama' ? 'ollama:' + m.id : m.id" 
+                     class="bg-[#171717]"
+                   >
+                     {{ m.name }}
+                   </option>
+                </select>
+                <div v-if="providerModels.length === 0" class="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center pointer-events-none">
+                  <span class="text-[9px] text-gray-600 font-bold uppercase tracking-wider">Loading available models...</span>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
             </div>
           </div>
         </div>
