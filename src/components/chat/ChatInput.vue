@@ -5,8 +5,14 @@ import type { KnowledgeBase } from '@/services/knowledgeService'
 
 const knowledgeBases = inject<Ref<KnowledgeBase[]>>('knowledgeBases', ref([]))
 const activeKnowledgeBaseId = inject<Ref<string | null>>('activeKnowledgeBaseId', ref(null))
-const showKbDropdown = inject<Ref<boolean>>('showKbDropdown', ref(false))
 const selectKb = inject<(id: string | null) => void>('selectKb', () => {})
+
+const mcpSources = inject<Ref<any[]>>('mcpSources', ref([]))
+const activeMcpSourceId = inject<Ref<string | null>>('activeMcpSourceId', ref(null))
+const selectMcpSource = inject<(id: string | null) => void>('selectMcpSource', () => {})
+
+const showUnifiedDropdown = ref(false)
+const activeSubmenu = ref<'knowledge' | 'mcp' | null>(null)
 
 const props = defineProps<{
   disabled?: boolean
@@ -110,6 +116,7 @@ async function pollTaskStatus(taskId: string): Promise<string> {
 }
 
 function triggerFileInput() {
+  showUnifiedDropdown.value = false
   fileInput.value?.click()
 }
 
@@ -174,15 +181,161 @@ function removeSelectedFile() {
         
         <div class="flex items-center justify-between px-2 pt-1">
           <div class="flex gap-0.5 items-center relative">
-            <!-- Attachment -->
-            <button 
-              type="button" 
-              @click="triggerFileInput"
-              class="p-2 text-[#b4b4b4] hover:text-white hover:bg-white/5 rounded-full transition-all flex items-center justify-center active:scale-95"
-              title="Attach"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-            </button>
+            <!-- Unified Context Menu (Paperclip) -->
+            <div class="relative flex items-center">
+              <button 
+                type="button" 
+                @click="showUnifiedDropdown = !showUnifiedDropdown"
+                class="p-2 rounded-full transition-all flex items-center justify-center active:scale-95 relative"
+                :class="(activeKnowledgeBaseId || activeMcpSourceId) ? 'text-white bg-white/10' : 'text-[#b4b4b4] hover:text-white hover:bg-white/5'"
+                title="Adjuntar y Contexto"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                <!-- Indicator dot if context active -->
+                <div v-if="activeKnowledgeBaseId || activeMcpSourceId" class="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full border border-[#2f2f2f]"></div>
+              </button>
+
+              <!-- Unified Nested Dropdown -->
+              <div v-if="showUnifiedDropdown" 
+                class="absolute bottom-[calc(100%+12px)] left-0 w-64 bg-[#2f2f2f] border border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in"
+                @mouseleave="activeSubmenu = null"
+              >
+                <!-- Group 1: Files -->
+                <div class="px-2">
+                  <button 
+                    @click="triggerFileInput"
+                    class="w-full text-left px-3 py-2.5 text-[14px] text-[#ececec] hover:bg-white/[0.04] rounded-xl transition-colors flex items-center gap-3 group/item"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover/item:bg-indigo-500/20 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                    </div>
+                    <span class="font-medium">Subir Archivo</span>
+                  </button>
+                </div>
+
+                <div class="h-px bg-white/5 my-1.5 mx-2"></div>
+
+                <!-- Group 2: Contexts -->
+                <div class="px-2 space-y-0.5">
+                  <!-- Knowledge Submenu Trigger -->
+                  <div class="relative">
+                    <button 
+                      @mouseenter="activeSubmenu = 'knowledge'"
+                      class="w-full text-left px-3 py-2.5 text-[14px] text-[#ececec] hover:bg-white/[0.04] rounded-xl transition-colors flex items-center justify-between group/item"
+                      :class="{ 'bg-white/[0.04]': activeSubmenu === 'knowledge' }"
+                    >
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 group-hover/item:bg-amber-500/20 transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+                        </div>
+                        <div class="flex flex-col">
+                          <span class="font-medium">Conocimiento</span>
+                          <span class="text-[10px] text-[#7a7a7a]">{{ activeKnowledgeBaseId ? 'Personalizado' : 'Sin Contexto' }}</span>
+                        </div>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[#7a7a7a]"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+
+                    <!-- Knowledge Submenu -->
+                    <div v-if="activeSubmenu === 'knowledge'" 
+                      class="absolute left-[calc(100%+8px)] bottom-0 w-64 bg-[#2f2f2f] border border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in"
+                    >
+                      <div class="px-3 py-1.5 text-[10px] font-bold text-[#7a7a7a] uppercase tracking-widest mb-1">Colecciones (RAG)</div>
+                      <div class="max-h-[240px] overflow-y-auto px-1 group">
+                        <button 
+                          @click="selectKb(null); showUnifiedDropdown = false"
+                          class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex items-center justify-between mb-0.5"
+                          :class="!activeKnowledgeBaseId ? 'bg-white/10 text-white' : 'text-[#b4b4b4] hover:bg-white/5'"
+                        >
+                          <span class="flex items-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" x2="19.07" y1="4.93" y2="19.07"/></svg>
+                             Sin Conocimiento
+                          </span>
+                          <svg v-if="!activeKnowledgeBaseId" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-400"><path d="M20 6 9 17l-5-5"/></svg>
+                        </button>
+                        <button 
+                          v-for="kb in knowledgeBases" :key="kb.id"
+                          @click="selectKb(kb.id); showUnifiedDropdown = false"
+                          class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex items-center justify-between mb-0.5"
+                          :class="activeKnowledgeBaseId === kb.id ? 'bg-white/10 text-white' : 'text-[#b4b4b4] hover:bg-white/5'"
+                        >
+                          <span class="flex items-center gap-2 truncate">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+                            <span class="truncate">{{ kb.name }}</span>
+                          </span>
+                          <svg v-if="activeKnowledgeBaseId === kb.id" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-400"><path d="M20 6 9 17l-5-5"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- MCP Submenu Trigger -->
+                  <div class="relative">
+                    <button 
+                      @mouseenter="activeSubmenu = 'mcp'"
+                      class="w-full text-left px-3 py-2.5 text-[14px] text-[#ececec] hover:bg-white/[0.04] rounded-xl transition-colors flex items-center justify-between group/item"
+                      :class="{ 'bg-white/[0.04]': activeSubmenu === 'mcp' }"
+                    >
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover/item:bg-emerald-500/20 transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+                        </div>
+                        <div class="flex flex-col">
+                          <span class="font-medium">Herramientas (MCP)</span>
+                          <span class="text-[10px] text-[#7a7a7a]">
+                            {{ activeMcpSourceId === 'none' ? 'Desactivadas' : (activeMcpSourceId ? 'Fuente Específica' : 'Todas Activas') }}
+                          </span>
+                        </div>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[#7a7a7a]"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+
+                    <!-- MCP Submenu -->
+                    <div v-if="activeSubmenu === 'mcp'" 
+                      class="absolute left-[calc(100%+8px)] bottom-0 w-64 bg-[#2f2f2f] border border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in"
+                    >
+                      <div class="px-3 py-1.5 text-[10px] font-bold text-[#7a7a7a] uppercase tracking-widest mb-1">Fuentes de Datos</div>
+                      <div class="max-h-[240px] overflow-y-auto px-1">
+                        <button 
+                          @click="selectMcpSource('none'); showUnifiedDropdown = false"
+                          class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex items-center justify-between mb-0.5"
+                          :class="activeMcpSourceId === 'none' ? 'bg-white/10 text-white' : 'text-[#b4b4b4] hover:bg-white/5'"
+                        >
+                          <span class="flex items-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><line x1="8" y1="2" x2="8" y2="4"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+                             Sin Herramientas
+                          </span>
+                          <svg v-if="activeMcpSourceId === 'none'" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-400"><path d="M20 6 9 17l-5-5"/></svg>
+                        </button>
+                        <button 
+                          @click="selectMcpSource(null); showUnifiedDropdown = false"
+                          class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex items-center justify-between mb-0.5"
+                          :class="activeMcpSourceId === null ? 'bg-white/10 text-white' : 'text-[#b4b4b4] hover:bg-white/5'"
+                        >
+                          <span class="flex items-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/></svg>
+                             Todas las Fuentes
+                          </span>
+                          <svg v-if="activeMcpSourceId === null" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-400"><path d="M20 6 9 17l-5-5"/></svg>
+                        </button>
+                        <button 
+                          v-for="source in mcpSources" :key="source.id"
+                          @click="selectMcpSource(source.id); showUnifiedDropdown = false"
+                          class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex items-center justify-between mb-0.5"
+                          :class="activeMcpSourceId === source.id ? 'bg-white/10 text-white' : 'text-[#b4b4b4] hover:bg-white/5'"
+                        >
+                          <span class="flex items-center gap-2 truncate pr-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                            <span class="truncate">{{ source.name }}</span>
+                          </span>
+                          <svg v-if="activeMcpSourceId === source.id" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-400"><path d="M20 6 9 17l-5-5"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <button type="button" class="p-2 text-[#b4b4b4] hover:text-white hover:bg-white/5 rounded-full transition-all flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
@@ -190,55 +343,17 @@ function removeSelectedFile() {
 
             <div class="h-4 w-px bg-white/10 mx-1.5"></div>
 
-            <!-- Knowledge Base Selector -->
-            <div class="relative flex items-center">
-              <button 
-                @click="showKbDropdown = !showKbDropdown" 
-                class="flex items-center gap-1.5 text-[13px] font-medium px-2.5 py-1.5 rounded-lg transition-all"
-                :class="activeKnowledgeBaseId ? 'text-[#ececec] bg-white/5 hover:bg-white/10' : 'text-[#7a7a7a] hover:text-[#b4b4b4] hover:bg-white/5'"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
-                <span class="max-w-[120px] truncate">
-                  {{ activeKnowledgeBaseId ? knowledgeBases.find(k => k.id === activeKnowledgeBaseId)?.name : 'Sin Contexto' }}
+            <!-- Visual indicators of active context -->
+            <div class="flex items-center gap-1.5 overflow-hidden">
+                <span v-if="activeKnowledgeBaseId" class="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[11px] font-medium rounded-md border border-indigo-500/20 truncate max-w-[100px]">
+                    {{ knowledgeBases.find(k => k.id === activeKnowledgeBaseId)?.name }}
                 </span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5" :class="showKbDropdown ? 'rotate-180' : ''"><path d="m6 9 6 6 6-6"/></svg>
-              </button>
-              
-              <div v-if="showKbDropdown" class="absolute bottom-[calc(100%+12px)] left-0 w-64 bg-[#2f2f2f] border border-white/10 rounded-2xl shadow-2xl py-2 z-50">
-                <div class="px-1.5">
-                  <button 
-                    @click="selectKb(null)"
-                    class="w-full text-left px-3 py-2 text-[14px] text-[#b4b4b4] hover:bg-white/[0.04] rounded-xl transition-colors flex items-center justify-between"
-                  >
-                    <span class="flex items-center gap-2 font-medium" :class="{'!text-white': !activeKnowledgeBaseId}">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="!activeKnowledgeBaseId ? 'text-[#ececec]' : 'text-[#7a7a7a]'"><circle cx="12" cy="12" r="10"/><line x1="4.93" x2="19.07" y1="4.93" y2="19.07"/></svg>
-                      Sin Contexto
-                    </span>
-                    <svg v-if="!activeKnowledgeBaseId" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M20 6 9 17l-5-5"/></svg>
-                  </button>
-                </div>
-                
-                <div class="h-px bg-white/5 my-2"></div>
-                
-                <div class="px-3 pb-2 text-[11px] text-[#7a7a7a] font-semibold tracking-wider uppercase">Tus Colecciones</div>
-                
-                <div class="px-1.5 max-h-[200px] overflow-y-auto no-scrollbar">
-                  <button 
-                    v-for="kb in knowledgeBases" :key="kb.id"
-                    @click="selectKb(kb.id)"
-                    class="w-full text-left px-3 py-2 text-[14px] text-[#b4b4b4] hover:bg-white/[0.04] rounded-xl transition-colors flex items-center justify-between mb-0.5"
-                  >
-                    <span class="flex items-center gap-2 truncate pr-2 font-medium" :class="{'!text-white': activeKnowledgeBaseId === kb.id}">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="activeKnowledgeBaseId === kb.id ? 'text-[#ececec]' : 'text-[#7a7a7a]'"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
-                      <span class="truncate">{{ kb.name }}</span>
-                    </span>
-                    <svg v-if="activeKnowledgeBaseId === kb.id" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-white"><path d="M20 6 9 17l-5-5"/></svg>
-                  </button>
-                  <div v-if="knowledgeBases.length === 0" class="px-4 py-4 text-[13px] text-[#7a7a7a] text-center bg-black/10 mx-1.5 rounded-xl border border-white/5 my-1">
-                    No hay colecciones creadas.
-                  </div>
-                </div>
-              </div>
+                <span v-if="activeMcpSourceId && activeMcpSourceId !== 'none'" class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[11px] font-medium rounded-md border border-emerald-500/20 truncate max-w-[100px]">
+                    {{ mcpSources.find(s => s.id === activeMcpSourceId)?.name }}
+                </span>
+                <span v-if="activeMcpSourceId === 'none'" class="px-2 py-0.5 bg-red-500/10 text-red-400 text-[11px] font-medium rounded-md border border-red-500/20">
+                    Sin Herramientas
+                </span>
             </div>
           </div>
           

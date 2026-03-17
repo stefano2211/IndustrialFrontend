@@ -7,6 +7,7 @@ import KnowledgeListView from '../views/workspace/KnowledgeListView.vue'
 import KnowledgeDetailView from '../views/workspace/KnowledgeDetailView.vue'
 import PromptsView from '../views/workspace/PromptsView.vue'
 import ModelsView from '../views/workspace/ModelsView.vue'
+import ToolsView from '../views/workspace/ToolsView.vue'
 import AdminLayout from '../views/admin/AdminLayout.vue'
 import UsersView from '../views/admin/UsersView.vue'
 import AnalyticsView from '../views/admin/AnalyticsView.vue'
@@ -58,6 +59,11 @@ const router = createRouter({
                     path: 'models',
                     name: 'models-list',
                     component: ModelsView
+                },
+                {
+                    path: 'tools',
+                    name: 'workspace-tools',
+                    component: ToolsView
                 }
             ]
         },

@@ -6,6 +6,7 @@ import ChatControls from '@/components/chat/ChatControls.vue'
 import { conversationService, type Conversation, type MessageItem } from '@/services/conversationService'
 import { knowledgeService, type KnowledgeBase } from '@/services/knowledgeService'
 import modelService from '@/services/modelService'
+import toolService, { type MCPSource } from '@/services/toolService'
 import api from '@/services/api'
 import { systemService } from '@/services/systemService'
 
@@ -51,6 +52,10 @@ const isLoadingMessages = ref(false)
 const knowledgeBases = ref<KnowledgeBase[]>([])
 const activeKnowledgeBaseId = ref<string | null>(null)
 const showKbDropdown = ref(false)
+
+// MCP Sources
+const mcpSources = ref<MCPSource[]>([])
+const activeMcpSourceId = ref<string | null>(null)
 
 function toggleSidebar() {
   isSidebarOpen.value = !isSidebarOpen.value
@@ -161,6 +166,21 @@ async function loadKnowledgeBases() {
   }
 }
 
+async function loadMcpSources() {
+  try {
+    mcpSources.value = await toolService.listSources()
+    if (activeMcpSourceId.value && !mcpSources.value.find(s => s.id === activeMcpSourceId.value)) {
+      activeMcpSourceId.value = null
+    }
+  } catch (error) {
+    console.error('Failed to load MCP sources', error)
+  }
+}
+
+function selectMcpSource(id: string | null) {
+  activeMcpSourceId.value = id
+}
+
 function selectKb(id: string | null) {
   activeKnowledgeBaseId.value = id
   showKbDropdown.value = false
@@ -233,6 +253,11 @@ provide('knowledgeBases', knowledgeBases)
 provide('refreshKnowledgeBases', loadKnowledgeBases)
 provide('showKbDropdown', showKbDropdown)
 provide('selectKb', selectKb)
+
+provide('activeMcpSourceId', activeMcpSourceId)
+provide('mcpSources', mcpSources)
+provide('selectMcpSource', selectMcpSource)
+provide('refreshMcpSources', loadMcpSources)
 provide('userName', userName)
 provide('chatParams', chatParams)
 
@@ -240,6 +265,7 @@ onMounted(() => {
   loadUserInfo()
   loadConversations()
   loadKnowledgeBases()
+  loadMcpSources()
   loadModelInfo()
   loadStats()
   // Refresh stats every minute
