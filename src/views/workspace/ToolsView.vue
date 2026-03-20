@@ -14,8 +14,11 @@ const discoveryUrl = ref('')
 const discoveredTools = ref<any[]>([])
 const discoveryError = ref('')
 const isResourceMode = ref(false)
-const guidedPaths = ref<string[]>([])
+const guidedPaths = ref<{ path: string; method: string }[]>([])
 const newPath = ref('')
+const newPathMethod = ref('GET')
+
+const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
 // Form State
 const isAddingSource = ref(false)
@@ -85,9 +88,10 @@ async function deleteSource(id: string) {
 }
 
 function addPath() {
-  if (newPath.value) {
-    guidedPaths.value.push(newPath.value)
+  if (newPath.value.trim()) {
+    guidedPaths.value.push({ path: newPath.value.trim(), method: newPathMethod.value })
     newPath.value = ''
+    newPathMethod.value = 'GET'
   }
 }
 
@@ -103,13 +107,14 @@ async function handleDiscover() {
   
   try {
     if (guidedPaths.value.length > 0) {
-      for (const path of guidedPaths.value) {
-        const fullUrl = discoveryUrl.value.endsWith('/') || path.startsWith('/') 
-          ? `${discoveryUrl.value}${path}` 
-          : `${discoveryUrl.value}/${path}`
+      for (const entry of guidedPaths.value) {
+        const base = discoveryUrl.value
+        const fullUrl = base.endsWith('/') || entry.path.startsWith('/') 
+          ? `${base}${entry.path}` 
+          : `${base}/${entry.path}`
         
         try {
-          const result = await toolService.discoverTools(fullUrl, false, true)
+          const result = await toolService.discoverTools(fullUrl, false, true, entry.method)
           discoveredTools.value.push(...result)
         } catch (pathErr) {
           console.error(`Failed to bridge path ${fullUrl}`, pathErr)
@@ -126,18 +131,23 @@ async function handleDiscover() {
 }
 
 async function saveTool(discoveredTool: any) {
+  // Merge the full discovery config so the backend has url, method, transport all in one place
+  const discoveryConfig = discoveredTool.config || {}
   const toolToSave = {
     name: discoveredTool.name,
     description: discoveredTool.description,
-    api_url: discoveredTool.config?.url || discoveryUrl.value, 
-    method: discoveredTool.config?.method || 'GET',
+    api_url: discoveryConfig.url || discoveryUrl.value,
+    method: (discoveryConfig.method || 'GET').toUpperCase(),
     is_enabled: true,
     system_prompt: `Dynamic bridge for ${discoveredTool.name}`,
-    config: { 
-      mcp_name: discoveredTool.name,
-      transport: discoveredTool.config?.transport || 'mcp'
+    // Persist the FULL config block: url + method + transport needed by mcp_tool.py
+    config: {
+      url: discoveryConfig.url || discoveryUrl.value,
+      method: (discoveryConfig.method || 'GET').toUpperCase(),
+      transport: discoveryConfig.transport || 'rest',
     },
-    parameter_schema: discoveredTool.inputSchema || {},
+    // Use the rich parameter_schema returned by the LLM analysis (includes response field hints)
+    parameter_schema: discoveredTool.parameter_schema || discoveredTool.inputSchema || {},
     source_id: selectedSource.value?.id
   }
 
@@ -322,11 +332,31 @@ onMounted(loadData)
               <!-- Guided Paths Inside Detail -->
               <div class="pt-4 border-t border-white/5">
                 <p class="text-[11px] font-bold text-[#4a4a4a] uppercase mb-3">Custom Endpoints</p>
+
+                <!-- Method selector -->
+                <div class="flex gap-1 mb-2">
+                  <button
+                    v-for="m in HTTP_METHODS"
+                    :key="m"
+                    @click="newPathMethod = m"
+                    :class="[
+                      'px-2 py-0.5 rounded text-[10px] font-bold transition-all',
+                      newPathMethod === m
+                        ? m === 'GET'    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                        : m === 'DELETE' ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                        : m === 'PATCH'  ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
+                        : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
+                        : 'bg-[#1a1a1a] text-[#4a4a4a] border border-white/5 hover:text-white'
+                    ]"
+                  >{{ m }}</button>
+                </div>
+
+                <!-- Path input + add button -->
                 <div class="flex gap-2 mb-3">
                   <input 
                     v-model="newPath"
                     type="text" 
-                    placeholder="/items/{id}"
+                    :placeholder="newPathMethod === 'GET' ? '/items/{id}' : '/items'"
                     class="flex-1 bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-violet-500/30"
                     @keyup.enter="addPath"
                   >
@@ -334,10 +364,26 @@ onMounted(loadData)
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                   </button>
                 </div>
+
+                <!-- Registered paths as tags -->
                 <div class="flex flex-wrap gap-2">
-                  <div v-for="(path, index) in guidedPaths" :key="index" class="flex items-center gap-2 px-2 py-1 bg-violet-500/5 border border-violet-500/10 rounded-lg text-violet-300 text-[11px] font-mono">
-                    {{ path }}
-                    <button @click="removePath(index)" class="hover:text-red-400"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                  <div
+                    v-for="(entry, index) in guidedPaths"
+                    :key="index"
+                    class="flex items-center gap-1.5 px-2 py-1 bg-violet-500/5 border border-violet-500/10 rounded-lg text-[11px] font-mono"
+                  >
+                    <!-- Method badge -->
+                    <span :class="[
+                      'px-1.5 py-0.5 rounded text-[9px] font-bold uppercase',
+                      entry.method === 'GET'    ? 'bg-emerald-500/20 text-emerald-400'
+                      : entry.method === 'DELETE' ? 'bg-red-500/20 text-red-400'
+                      : entry.method === 'PATCH'  ? 'bg-yellow-500/20 text-yellow-400'
+                      : 'bg-blue-500/20 text-blue-400'
+                    ]">{{ entry.method }}</span>
+                    <span class="text-violet-300">{{ entry.path }}</span>
+                    <button @click="removePath(index)" class="text-[#4a4a4a] hover:text-red-400 transition-colors ml-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
                   </div>
                 </div>
               </div>

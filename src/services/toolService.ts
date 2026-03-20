@@ -51,9 +51,9 @@ const toolService = {
         await api.delete(`/tools/${id}`)
     },
 
-    async discoverTools(url: string, isStdio: boolean = false, isResource: boolean = false): Promise<any[]> {
+    async discoverTools(url: string, isStdio: boolean = false, isResource: boolean = false, method: string = 'GET'): Promise<any[]> {
         const response = await api.get('/tools/mcp/discover', {
-            params: { url, is_stdio: isStdio, is_resource: isResource }
+            params: { url, is_stdio: isStdio, is_resource: isResource, method }
         })
         return response.data
     },
