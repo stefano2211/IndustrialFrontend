@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import promptService, { type Prompt, type PromptCreate } from '@/services/promptService'
+import toolService, { type ToolConfig, type MCPSource } from '@/services/toolService'
+import VariableAutocomplete from '@/components/common/VariableAutocomplete.vue'
+
+const availableTools = ref<ToolConfig[]>([])
+const availableSources = ref<MCPSource[]>([])
+const cursorPos = ref(0)
 
 const prompts = ref<Prompt[]>([])
 const isLoading = ref(true)
@@ -19,7 +25,34 @@ const newPrompt = ref<PromptCreate>({
 
 onMounted(async () => {
   await fetchPrompts()
+  try {
+    const [tools, sources] = await Promise.all([
+      toolService.listTools(),
+      toolService.listSources()
+    ])
+    availableTools.value = tools
+    availableSources.value = sources
+  } catch (err) {
+    console.error('Failed to load tools and sources for autocomplete', err)
+  }
 })
+
+function updateCursorPos(e: Event) {
+  const target = e.target as HTMLInputElement
+  cursorPos.value = target.selectionStart || 0
+}
+
+function handleVariableInsert(newQuery: string, newPos: number) {
+  newPrompt.value.query = newQuery
+  cursorPos.value = newPos
+  setTimeout(() => {
+    const input = document.getElementById('prompt-query-input') as HTMLInputElement
+    if (input) {
+      input.focus()
+      input.setSelectionRange(newPos, newPos)
+    }
+  }, 10)
+}
 
 async function fetchPrompts() {
   try {
@@ -87,7 +120,6 @@ async function deletePrompt(id: string) {
 
 const filteredPrompts = ref<Prompt[]>([])
 // Simple reactive filter
-import { watch } from 'vue'
 watch([prompts, searchQuery], () => {
   if (!searchQuery.value) {
     filteredPrompts.value = prompts.value
@@ -222,12 +254,26 @@ watch([prompts, searchQuery], () => {
           </div>
           <div>
             <label class="block text-[12px] font-medium text-[#7a7a7a] mb-1.5 ml-0.5">Query (LLM Question)</label>
-            <input 
-              v-model="newPrompt.query"
-              type="text" 
-              placeholder="e.g. Make a detailed summary of this PDF"
-              class="w-full bg-[#212121] border border-white/[0.08] rounded-xl px-4 py-2.5 text-[14px] text-white focus:outline-none focus:border-white/20 transition-all placeholder:text-[#7a7a7a]"
-            >
+            <div class="relative">
+              <VariableAutocomplete 
+                :sources="availableSources"
+                :tools="availableTools" 
+                :query="newPrompt.query" 
+                :cursorPosition="cursorPos" 
+                @insert="handleVariableInsert" 
+                @close="cursorPos = 0" 
+              />
+              <input 
+                id="prompt-query-input"
+                v-model="newPrompt.query"
+                @input="updateCursorPos"
+                @click="updateCursorPos"
+                @keyup="updateCursorPos"
+                type="text" 
+                placeholder="e.g. Make a detailed summary of this PDF"
+                class="w-full bg-[#212121] border border-white/[0.08] rounded-xl px-4 py-2.5 text-[14px] text-white focus:outline-none focus:border-white/20 transition-all placeholder:text-[#7a7a7a]"
+              >
+            </div>
           </div>
         </div>
         <div class="p-6 bg-white/[0.02] flex items-center justify-end gap-3">

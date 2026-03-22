@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, inject, type Ref } from 'vue'
+import { ref, inject, type Ref, onMounted } from 'vue'
 import { documentService } from '@/services/documentService'
+import toolService, { type ToolConfig, type MCPSource } from '@/services/toolService'
+import VariableAutocomplete from '@/components/common/VariableAutocomplete.vue'
 import type { KnowledgeBase } from '@/services/knowledgeService'
 
 const knowledgeBases = inject<Ref<KnowledgeBase[]>>('knowledgeBases', ref([]))
@@ -25,6 +27,40 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const uploadProgress = ref(0)
 const uploadStatusText = ref('')
 const currentPollingTaskId = ref<string | null>(null)
+
+const availableTools = ref<ToolConfig[]>([])
+const availableSources = ref<MCPSource[]>([])
+const cursorPos = ref(0)
+
+onMounted(async () => {
+  try {
+    const [tools, sources] = await Promise.all([
+      toolService.listTools(),
+      toolService.listSources()
+    ])
+    availableTools.value = tools
+    availableSources.value = sources
+  } catch (err) {
+    console.error('Failed to load tools and sources for autocomplete', err)
+  }
+})
+
+function updateCursorPos(e: Event) {
+  const target = e.target as HTMLTextAreaElement
+  cursorPos.value = target.selectionStart || 0
+}
+
+function handleVariableInsert(newQuery: string, newPos: number) {
+  chatInput.value = newQuery
+  cursorPos.value = newPos
+  setTimeout(() => {
+    const textarea = document.querySelector('textarea')
+    if (textarea) {
+      textarea.focus()
+      textarea.setSelectionRange(newPos, newPos)
+    }
+  }, 10)
+}
 
 const emit = defineEmits<{
   (e: 'send', message: string): void
@@ -170,14 +206,27 @@ function removeSelectedFile() {
           accept=".pdf,.doc,.docx,.json"
         />
         
-        <textarea 
-          v-model="chatInput"
-          @keydown.enter.prevent="handleSend"
-          rows="1"
-          placeholder="How can I help you today?"
-          class="w-full bg-transparent resize-none outline-none px-4 py-2.5 max-h-[200px] text-[15px] text-[#ececec] placeholder-[#7a7a7a]"
-          :disabled="disabled || isUploading"
-        ></textarea>
+        <div class="relative w-full">
+          <VariableAutocomplete 
+            :sources="availableSources"
+            :tools="availableTools" 
+            :query="chatInput" 
+            :cursorPosition="cursorPos" 
+            @insert="handleVariableInsert" 
+            @close="cursorPos = 0" 
+          />
+          <textarea 
+            v-model="chatInput"
+            @keydown.enter.prevent="handleSend"
+            @input="updateCursorPos"
+            @click="updateCursorPos"
+            @keyup="updateCursorPos"
+            rows="1"
+            placeholder="How can I help you today?"
+            class="w-full bg-transparent resize-none outline-none px-4 py-2.5 max-h-[200px] text-[15px] text-[#ececec] placeholder-[#7a7a7a]"
+            :disabled="disabled || isUploading"
+          ></textarea>
+        </div>
         
         <div class="flex items-center justify-between px-2 pt-1">
           <div class="flex gap-0.5 items-center relative">
