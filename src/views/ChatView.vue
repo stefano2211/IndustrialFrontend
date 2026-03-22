@@ -20,6 +20,13 @@ const isLoading = ref(false)
 const streamingContent = ref('')
 const chatContainer = ref<HTMLDivElement | null>(null)
 
+interface SubagentStatus {
+  name: string
+  status: 'running' | 'complete' | 'error'
+  input?: any
+}
+const activeSubagents = ref<SubagentStatus[]>([])
+
 function scrollToBottom() {
   nextTick(() => {
     if (chatContainer.value) {
@@ -43,6 +50,7 @@ async function handleSendMessage(content: string) {
   activeMessages.value.push({ role: 'user', content })
   isLoading.value = true
   streamingContent.value = ''
+  activeSubagents.value = []
   scrollToBottom()
 
   try {
@@ -90,7 +98,22 @@ async function handleSendMessage(content: string) {
           : `Error: ${error}`
         activeMessages.value.push({ role: 'assistant', content: errMsg })
         streamingContent.value = ''
+        activeSubagents.value = []
         isLoading.value = false
+      },
+      // onSubagent
+      (subagent: { status: string, name: string, input?: any }) => {
+        const existing = activeSubagents.value.find(s => s.name === subagent.name)
+        if (existing) {
+          existing.status = subagent.status as any
+        } else {
+          activeSubagents.value.push({
+            name: subagent.name,
+            status: subagent.status as any,
+            input: subagent.input
+          })
+        }
+        scrollToBottom()
       }
     )
   } catch (error) {
@@ -181,6 +204,24 @@ function copyMessage(content: string) {
             <span class="text-[14px] font-medium text-white">Aura AI</span>
           </div>
           <div class="pl-10">
+            <!-- Subagent Cards -->
+            <div v-if="activeSubagents.length > 0" class="mb-3 flex flex-col gap-2">
+              <div v-for="subagent in activeSubagents" :key="subagent.name" 
+                   class="flex items-center gap-2 bg-white/[0.03] px-3 py-2 rounded-lg border border-white/5 text-xs text-white/80 max-w-fit">
+                <svg v-if="subagent.status === 'running'" class="animate-spin w-3 h-3 text-white/50" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <svg v-else-if="subagent.status === 'complete'" class="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <svg v-else class="w-3 h-3 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                
+                <span class="font-medium font-mono text-white/90">{{ subagent.name }}</span>
+                <span v-if="subagent.status === 'running'" class="text-white/50">ejecutando operación...</span>
+                <span v-else-if="subagent.status === 'complete'" class="text-white/50 text-emerald-500/80">operación completada</span>
+                <span v-else class="text-white/50 text-red-400/80">falló</span>
+              </div>
+            </div>
+
             <div v-if="streamingContent">
               <MarkdownRenderer :content="streamingContent" />
               <div class="inline-block w-[2px] h-[18px] bg-white/60 ml-0.5 animate-pulse align-text-bottom"></div>

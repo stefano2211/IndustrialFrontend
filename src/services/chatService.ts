@@ -22,7 +22,8 @@ export const chatService = {
         onToken: (token: string) => void,
         onMeta: (meta: { thread_id: string }) => void,
         onDone: (fullContent: string) => void,
-        onError: (error: string) => void
+        onError: (error: string) => void,
+        onSubagent: (subagent: { status: string, name: string, input?: any }) => void = () => {}
     ): Promise<void> {
         const token = localStorage.getItem('token')
         const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -73,6 +74,8 @@ export const chatService = {
                             onToken(data.content)
                         } else if (data.type === 'meta') {
                             onMeta(data)
+                        } else if (data.type === 'subagent') {
+                            onSubagent(data)
                         } else if (data.type === 'done') {
                             onDone(data.full_content)
                         } else if (data.type === 'error') {
