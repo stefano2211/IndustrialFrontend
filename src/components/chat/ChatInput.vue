@@ -3,6 +3,7 @@ import { ref, inject, type Ref, onMounted } from 'vue'
 import { documentService } from '@/services/documentService'
 import toolService, { type ToolConfig, type MCPSource } from '@/services/toolService'
 import VariableAutocomplete from '@/components/common/VariableAutocomplete.vue'
+import RichVariablesInput from '@/components/common/RichVariablesInput.vue'
 import type { KnowledgeBase } from '@/services/knowledgeService'
 
 const knowledgeBases = inject<Ref<KnowledgeBase[]>>('knowledgeBases', ref([]))
@@ -31,6 +32,7 @@ const currentPollingTaskId = ref<string | null>(null)
 const availableTools = ref<ToolConfig[]>([])
 const availableSources = ref<MCPSource[]>([])
 const cursorPos = ref(0)
+const richInputRef = ref<InstanceType<typeof RichVariablesInput> | null>(null)
 
 onMounted(async () => {
   try {
@@ -45,21 +47,14 @@ onMounted(async () => {
   }
 })
 
-function updateCursorPos(e: Event) {
-  const target = e.target as HTMLTextAreaElement
-  cursorPos.value = target.selectionStart || 0
-}
-
 function handleVariableInsert(newQuery: string, newPos: number) {
   chatInput.value = newQuery
   cursorPos.value = newPos
   setTimeout(() => {
-    const textarea = document.querySelector('textarea')
-    if (textarea) {
-      textarea.focus()
-      textarea.setSelectionRange(newPos, newPos)
+    if (richInputRef.value) {
+      richInputRef.value.focusAndSetCursor(newPos)
     }
-  }, 10)
+  }, 20)
 }
 
 const emit = defineEmits<{
@@ -215,17 +210,15 @@ function removeSelectedFile() {
             @insert="handleVariableInsert" 
             @close="cursorPos = 0" 
           />
-          <textarea 
+          <RichVariablesInput 
+            ref="richInputRef"
             v-model="chatInput"
-            @keydown.enter.prevent="handleSend"
-            @input="updateCursorPos"
-            @click="updateCursorPos"
-            @keyup="updateCursorPos"
-            rows="1"
+            @enter="handleSend"
+            @cursor-update="cursorPos = $event"
             placeholder="How can I help you today?"
-            class="w-full bg-transparent resize-none outline-none px-4 py-2.5 max-h-[200px] text-[15px] text-[#ececec] placeholder-[#7a7a7a]"
             :disabled="disabled || isUploading"
-          ></textarea>
+            class="min-h-[44px]"
+          />
         </div>
         
         <div class="flex items-center justify-between px-2 pt-1">

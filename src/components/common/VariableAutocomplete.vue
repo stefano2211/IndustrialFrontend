@@ -29,7 +29,7 @@ const emit = defineEmits<{
 
 const isOpen = ref(false)
 const searchTerm = ref('')
-const currentStep = ref<'source' | 'tool' | 'property' | 'field'>('source')
+const currentStep = ref<'source' | 'tool' | 'property' | 'category' | 'field'>('source')
 const selectedSource = ref<MCPSource | null>(null)
 const selectedTool = ref<ToolConfig | null>(null)
 
@@ -73,8 +73,18 @@ watch([() => props.query, () => props.cursorPosition], ([newQuery, newPos]) => {
         currentStep.value = 'property'
         selectedSource.value = props.sources.find(s => s.name.toLowerCase() === sourceName) || null
         selectedTool.value = props.tools.find(t => t.name.toLowerCase() === toolName) || null
+      } else if (parts.length === 4) {
+        // e.g. "maquinaria.get_maquinaria.key_values." -> Looking for category OR field
+        const propName = parts[2]
+        selectedSource.value = props.sources.find(s => s.name.toLowerCase() === sourceName) || null
+        selectedTool.value = props.tools.find(t => t.name.toLowerCase() === toolName) || null
+        if (propName === 'key_values') {
+          currentStep.value = 'category'
+        } else {
+          currentStep.value = 'field'
+        }
       } else {
-        // e.g. "maquinaria.get_maquinaria.key_figures." -> Looking for field
+        // e.g. "maquinaria.get_maquinaria.key_values.Status." -> Looking for field
         currentStep.value = 'field'
         selectedSource.value = props.sources.find(s => s.name.toLowerCase() === sourceName) || null
         selectedTool.value = props.tools.find(t => t.name.toLowerCase() === toolName) || null
@@ -112,28 +122,46 @@ const filteredOptions = computed(() => {
   } else if (currentStep.value === 'property' && selectedTool.value) {
     const propertySearch = searchTerm.value.split('.')[2] || ''
     return PROPERTIES.filter(p => p.id.includes(propertySearch) || p.label.toLowerCase().includes(propertySearch))
+  } else if (currentStep.value === 'category' && selectedTool.value) {
+    const propertySearch = searchTerm.value.split('.')[2] // 'key_values'
+    const categorySearch = searchTerm.value.split('.')[3]?.toLowerCase() || ''
+    
+    let categories: {id: string, label: string}[] = []
+    const schema = selectedTool.value.parameter_schema || {}
+    const filterable = schema.filterable_schema || {}
+    
+    if (propertySearch === 'key_values') {
+      const kv = filterable.key_values || {}
+      categories = Object.keys(kv).map(k => ({ id: k, label: `${k} (Columna)` }))
+    }
+    
+    return categories.filter(c => c.label.toLowerCase().includes(categorySearch))
+
   } else if (currentStep.value === 'field' && selectedTool.value) {
     const propertySearch = searchTerm.value.split('.')[2] // 'params', 'key_figures', etc.
-    const fieldSearch = searchTerm.value.split('.')[3]?.toLowerCase() || ''
+    let fieldSearch = ''
     
     let fields: {id: string, label: string}[] = []
     const schema = selectedTool.value.parameter_schema || {}
     const filterable = schema.filterable_schema || {}
     
     if (propertySearch === 'params') {
+      fieldSearch = searchTerm.value.split('.')[3]?.toLowerCase() || ''
       const props = schema.properties || {}
       fields = Object.keys(props).map(k => ({ id: k, label: k }))
     } else if (propertySearch === 'key_figures') {
+      fieldSearch = searchTerm.value.split('.')[3]?.toLowerCase() || ''
       const kf = filterable.key_figures || []
       fields = kf.map((k: string) => ({ id: k, label: k }))
     } else if (propertySearch === 'key_values') {
+      const categoryNameLower = searchTerm.value.split('.')[3]
+      fieldSearch = searchTerm.value.split('.')[4]?.toLowerCase() || ''
       const kv = filterable.key_values || {}
-      for (const [colName, vals] of Object.entries(kv)) {
-        if (Array.isArray(vals)) {
-          vals.forEach(v => {
-            fields.push({ id: String(v), label: `${v} (${colName})` })
-          })
-        }
+      
+      const actualCategoryKey = Object.keys(kv).find(k => k.toLowerCase() === categoryNameLower)
+      const vals = actualCategoryKey ? kv[actualCategoryKey] : []
+      if (Array.isArray(vals)) {
+        fields = vals.map(v => ({ id: String(v), label: String(v) }))
       }
     }
     
@@ -162,14 +190,32 @@ function selectOption(option: any) {
     const replacement = `{{${sourceName}.${toolName}.${propertyName}.`
     const newQuery = props.query.substring(0, startIdx.value) + replacement + props.query.substring(props.cursorPosition)
     emit('insert', newQuery, startIdx.value + replacement.length)
+  } else if (currentStep.value === 'category') {
+    // Insert category AND a dot to see values
+    const parts = searchTerm.value.split('.')
+    const sourceName = parts[0]
+    const toolName = parts[1]
+    const propertyName = parts[2]
+    const categoryName = option.id
+    const replacement = `{{${sourceName}.${toolName}.${propertyName}.${categoryName}.`
+    const newQuery = props.query.substring(0, startIdx.value) + replacement + props.query.substring(props.cursorPosition)
+    emit('insert', newQuery, startIdx.value + replacement.length)
   } else if (currentStep.value === 'field') {
     // Insert field AND closing braces
     const parts = searchTerm.value.split('.')
     const sourceName = parts[0]
     const toolName = parts[1]
     const propertyName = parts[2]
-    const fieldName = option.id
-    const replacement = `{{${sourceName}.${toolName}.${propertyName}.${fieldName}}}`
+    
+    let replacement = ''
+    if (propertyName === 'key_values') {
+      const categoryName = parts[3]
+      const fieldName = option.id
+      replacement = `{{${sourceName}.${toolName}.${propertyName}.${categoryName}.${fieldName}}}`
+    } else {
+      const fieldName = option.id
+      replacement = `{{${sourceName}.${toolName}.${propertyName}.${fieldName}}}`
+    }
     const newQuery = props.query.substring(0, startIdx.value) + replacement + props.query.substring(props.cursorPosition)
     emit('insert', newQuery, startIdx.value + replacement.length)
     close()
@@ -183,7 +229,7 @@ function selectOption(option: any) {
     <!-- HEADER -->
     <div class="px-3 pb-2 mb-1 border-b border-white/5 flex items-center justify-between">
       <span class="text-[11px] font-bold text-[#7a7a7a] uppercase tracking-wider">
-        {{ currentStep === 'source' ? 'Seleccionar Fuente (MCP)' : currentStep === 'tool' ? `Fuente: ${selectedSource?.name}` : currentStep === 'property' ? `Herramienta: ${selectedTool?.name}` : 'Seleccionar Campo' }}
+        {{ currentStep === 'source' ? 'Seleccionar Fuente (MCP)' : currentStep === 'tool' ? `Fuente: ${selectedSource?.name}` : currentStep === 'property' ? `Herramienta: ${selectedTool?.name}` : currentStep === 'category' ? 'Seleccionar Columna' : 'Seleccionar Valor' }}
       </span>
       <button @click="close" class="text-[#7a7a7a] hover:text-white p-0.5 rounded-full hover:bg-white/5">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -203,9 +249,9 @@ function selectOption(option: any) {
           class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex flex-col gap-0.5 hover:bg-white/5 group"
         >
           <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-400"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
-            <span class="font-medium text-[#ececec]">{{ source.name }}</span>
-            <span class="text-[10px] text-[#7a7a7a] bg-black/20 px-1.5 py-0.5 rounded border border-white/5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">Seleccionar</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-400 shrink-0"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
+            <span class="font-medium text-[#ececec] truncate">{{ source.name }}</span>
+            <span class="text-[10px] text-[#7a7a7a] bg-black/20 px-1.5 py-0.5 rounded border border-white/5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Seleccionar</span>
           </div>
           <span class="text-[11px] text-[#7a7a7a] line-clamp-1 ml-5">{{ source.type }} - {{ source.url }}</span>
         </button>
@@ -218,9 +264,9 @@ function selectOption(option: any) {
           class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex flex-col gap-0.5 hover:bg-white/5 group"
         >
           <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-indigo-400"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/></svg>
-            <span class="font-medium text-[#ececec]">{{ tool.name }}</span>
-            <span class="text-[10px] text-[#7a7a7a] bg-black/20 px-1.5 py-0.5 rounded border border-white/5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">Seleccionar</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-indigo-400 shrink-0"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/></svg>
+            <span class="font-medium text-[#ececec] truncate">{{ tool.name }}</span>
+            <span class="text-[10px] text-[#7a7a7a] bg-black/20 px-1.5 py-0.5 rounded border border-white/5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Seleccionar</span>
           </div>
           <span v-if="tool.description" class="text-[11px] text-[#7a7a7a] line-clamp-1 ml-5">{{ tool.description }}</span>
         </button>
@@ -233,11 +279,25 @@ function selectOption(option: any) {
           class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex flex-col gap-0.5 hover:bg-white/5 group"
         >
           <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-emerald-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
-            <span class="font-medium text-[#ececec]">{{ prop.label }}</span>
-            <span class="text-[10px] text-[#7a7a7a] bg-black/20 px-1.5 py-0.5 rounded border border-white/5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">Ver Campos</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-emerald-400 shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+            <span class="font-medium text-[#ececec] truncate">{{ prop.label }}</span>
+            <span class="text-[10px] text-[#7a7a7a] bg-black/20 px-1.5 py-0.5 rounded border border-white/5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Ver Campos</span>
           </div>
           <span class="text-[11px] text-[#7a7a7a] line-clamp-1 ml-5">{{ prop.desc }}</span>
+        </button>
+      </template>
+
+      <template v-else-if="currentStep === 'category'">
+        <button 
+          v-for="cat in filteredOptions" :key="cat.id"
+          @click.prevent="selectOption(cat)"
+          class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex flex-col gap-0.5 hover:bg-white/5 group"
+        >
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-pink-400 shrink-0"><path d="M4 9h16"/><path d="M4 15h16"/><path d="M10 3L8 21"/><path d="M16 3l-2 18"/></svg>
+            <span class="font-medium text-[#ececec] truncate">{{ cat.label }}</span>
+            <span class="text-[10px] text-[#7a7a7a] bg-black/20 px-1.5 py-0.5 rounded border border-white/5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Ver Valores</span>
+          </div>
         </button>
       </template>
 
@@ -248,9 +308,9 @@ function selectOption(option: any) {
           class="w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors flex flex-col gap-0.5 hover:bg-white/5 group"
         >
           <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-400"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></svg>
-            <span class="font-medium text-[#ececec]">{{ field.label }}</span>
-            <span class="text-[10px] text-[#7a7a7a] bg-black/20 px-1.5 py-0.5 rounded border border-white/5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">Insertar</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-400 shrink-0"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></svg>
+            <span class="font-medium text-[#ececec] truncate" :title="field.label">{{ field.label }}</span>
+            <span class="text-[10px] text-[#7a7a7a] bg-black/20 px-1.5 py-0.5 rounded border border-white/5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Insertar</span>
           </div>
         </button>
       </template>

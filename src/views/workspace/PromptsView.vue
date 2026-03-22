@@ -3,10 +3,12 @@ import { ref, onMounted, watch } from 'vue'
 import promptService, { type Prompt, type PromptCreate } from '@/services/promptService'
 import toolService, { type ToolConfig, type MCPSource } from '@/services/toolService'
 import VariableAutocomplete from '@/components/common/VariableAutocomplete.vue'
+import RichVariablesInput from '@/components/common/RichVariablesInput.vue'
 
 const availableTools = ref<ToolConfig[]>([])
 const availableSources = ref<MCPSource[]>([])
 const cursorPos = ref(0)
+const richInputRef = ref<InstanceType<typeof RichVariablesInput> | null>(null)
 
 const prompts = ref<Prompt[]>([])
 const isLoading = ref(true)
@@ -38,20 +40,17 @@ onMounted(async () => {
 })
 
 function updateCursorPos(e: Event) {
-  const target = e.target as HTMLInputElement
-  cursorPos.value = target.selectionStart || 0
+  // Not needed linearly, rely on the component event
 }
 
 function handleVariableInsert(newQuery: string, newPos: number) {
   newPrompt.value.query = newQuery
   cursorPos.value = newPos
   setTimeout(() => {
-    const input = document.getElementById('prompt-query-input') as HTMLInputElement
-    if (input) {
-      input.focus()
-      input.setSelectionRange(newPos, newPos)
+    if (richInputRef.value) {
+      richInputRef.value.focusAndSetCursor(newPos)
     }
-  }, 10)
+  }, 20)
 }
 
 async function fetchPrompts() {
@@ -263,16 +262,14 @@ watch([prompts, searchQuery], () => {
                 @insert="handleVariableInsert" 
                 @close="cursorPos = 0" 
               />
-              <input 
+              <RichVariablesInput 
+                ref="richInputRef"
                 id="prompt-query-input"
                 v-model="newPrompt.query"
-                @input="updateCursorPos"
-                @click="updateCursorPos"
-                @keyup="updateCursorPos"
-                type="text" 
+                @cursor-update="cursorPos = $event"
                 placeholder="e.g. Make a detailed summary of this PDF"
-                class="w-full bg-[#212121] border border-white/[0.08] rounded-xl px-4 py-2.5 text-[14px] text-white focus:outline-none focus:border-white/20 transition-all placeholder:text-[#7a7a7a]"
-              >
+                class="w-full bg-[#212121] border border-white/[0.08] rounded-xl px-4 py-2.5 text-[14px] text-white focus:outline-none focus:border-white/20 transition-all placeholder:text-[#7a7a7a] min-h-[44px]"
+              />
             </div>
           </div>
         </div>
