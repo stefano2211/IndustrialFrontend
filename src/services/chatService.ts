@@ -23,7 +23,8 @@ export const chatService = {
         onMeta: (meta: { thread_id: string }) => void,
         onDone: (fullContent: string) => void,
         onError: (error: string) => void,
-        onSubagent: (subagent: { status: string, name: string, input?: any }) => void = () => {}
+        onSubagent: (subagent: { status: string, name: string, input?: any }) => void = () => {},
+        useGeneralist: boolean = false
     ): Promise<void> {
         const token = localStorage.getItem('token')
         const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -41,6 +42,7 @@ export const chatService = {
                 mcp_source_id: mcpSourceId,
                 model_id: modelId,
                 params: params || undefined,
+                use_generalist: useGeneralist,
             }),
         })
 

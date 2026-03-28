@@ -19,6 +19,7 @@ const chatParams = inject<any>('chatParams', {})
 const isLoading = ref(false)
 const streamingContent = ref('')
 const chatContainer = ref<HTMLDivElement | null>(null)
+const useGeneralist = ref(false)
 
 interface SubagentStatus {
   name: string
@@ -114,7 +115,9 @@ async function handleSendMessage(content: string) {
           })
         }
         scrollToBottom()
-      }
+      },
+      // useGeneralist
+      useGeneralist.value
     )
   } catch (error) {
     console.error('Stream error', error)
@@ -238,10 +241,28 @@ function copyMessage(content: string) {
       </div>
     </div>
 
-    <!-- Chat Input -->
-    <ChatInput 
-      :disabled="isLoading"
-      @send="handleSendMessage"
-    />
+    <!-- Generalist Toggle + Chat Input -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <!-- Generalist Mode Toggle -->
+      <div class="flex justify-center mb-2 px-4">
+        <button
+          @click="useGeneralist = !useGeneralist"
+          :class="[
+            'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all duration-200',
+            useGeneralist
+              ? 'bg-white/10 border-white/20 text-white'
+              : 'bg-transparent border-white/10 text-white/40 hover:text-white/60 hover:border-white/20'
+          ]"
+          :title="useGeneralist ? 'Modo Generalista activo — llama3.1:8b orquesta al experto industrial' : 'Activar Modo Generalista'"
+        >
+          <span>{{ useGeneralist ? '🌐' : '⚙️' }}</span>
+          <span>{{ useGeneralist ? 'Generalista' : 'Experto' }}</span>
+        </button>
+      </div>
+      <ChatInput 
+        :disabled="isLoading"
+        @send="handleSendMessage"
+      />
+    </div>
   </div>
 </template>
