@@ -30,7 +30,7 @@ const tabs = [
   { name: 'Models', path: '/workspace/models' },
   { name: 'Knowledge', path: '/workspace/knowledge' },
   { name: 'Prompts', path: '/workspace/prompts' },
-  { name: 'Skills', path: '/workspace/skills' },
+  { name: 'Databases', path: '/workspace/databases' },
   { name: 'Tools', path: '/workspace/tools' }
 ]
 </script>
