@@ -3,11 +3,16 @@ import { ref, onMounted, computed } from 'vue'
 import modelService, { type Model } from '@/services/modelService'
 import { knowledgeService } from '@/services/knowledgeService'
 import toolService from '@/services/toolService'
+import mlopsService from '@/services/mlopsService'
 
 const models = ref<Model[]>([])
 const currentModel = ref<Model | null>(null)
 const isLoading = ref(true)
 const isSaving = ref(false)
+const isTrainingText = ref(false)
+const isTrainingVL = ref(false)
+const trainingEpochs = ref(3)
+const vlEpochs = ref(2)
 const searchQuery = ref('')
 const showAdvanced = ref(false)
 
@@ -178,6 +183,59 @@ async function handleDelete() {
 function toggleModelActive(model: Model) {
   // Logic for toggling active state
   console.log('Toggle active for', model.id)
+}
+
+function getBaseModel(): string {
+  if (!currentModel.value) return ''
+  let baseModel = currentModel.value.base_model_id
+  if (baseModel.includes(':')) {
+    const [, modelId] = baseModel.split(':')
+    baseModel = modelId
+  }
+  return baseModel
+}
+
+async function handleRetrainText() {
+  if (!currentModel.value) return
+  const baseModel = getBaseModel()
+  if (!confirm(`Launch historical text LoRA training for "${currentModel.value.name}" using base model: ${baseModel}?`)) return
+
+  try {
+    isTrainingText.value = true
+    await mlopsService.launchTraining({
+      tenant_id: 'aura_tenant_01',
+      epochs: trainingEpochs.value,
+      base_model: baseModel
+    })
+    alert(`✅ Text LoRA training enqueued — base: ${baseModel} — ${trainingEpochs.value} epochs.`)
+  } catch (error: any) {
+    console.error('Error triggering text training:', error)
+    alert(`Failed to start training: ${error.response?.data?.detail || error.message}`)
+  } finally {
+    isTrainingText.value = false
+  }
+}
+
+async function handleRetrainVL() {
+  if (!currentModel.value) return
+  const baseModel = getBaseModel()
+  if (!confirm(`Launch VL (Vision-Language) training for "${currentModel.value.name}" using base model: ${baseModel}?`)) return
+
+  try {
+    isTrainingVL.value = true
+    await mlopsService.launchVLTraining({
+      tenant_id: 'aura_tenant_01',
+      vl_epochs: vlEpochs.value,
+      text_epochs: Math.min(1, trainingEpochs.value),
+      base_model: baseModel
+    })
+    alert(`✅ VL pipeline enqueued — base: ${baseModel} — ${vlEpochs.value} VL epochs.`)
+  } catch (error: any) {
+    console.error('Error triggering VL training:', error)
+    alert(`Failed to start VL training: ${error.response?.data?.detail || error.message}`)
+  } finally {
+    isTrainingVL.value = false
+  }
 }
 </script>
 
@@ -383,6 +441,105 @@ function toggleModelActive(model: Model) {
             </div>
           </div>
         </section>
+
+        <!-- MLOps & Training — 2 tarjetas separadas -->
+        <div class="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
+
+          <!-- Tarjeta 1: Histórico (Text LoRA) -->
+          <div class="bg-gradient-to-br from-indigo-500/10 to-blue-500/5 border border-indigo-500/20 rounded-2xl p-5 backdrop-blur-3xl shadow-[0_0_30px_rgba(99,102,241,0.05)]">
+            <div class="flex items-center justify-between border-b border-indigo-500/10 pb-3 mb-4">
+              <div class="flex items-center gap-2.5">
+                <div class="w-6 h-6 rounded bg-indigo-500/20 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                <div>
+                  <h3 class="text-[11px] font-black text-indigo-300 uppercase tracking-[0.15em]">Sistema 1 — Histórico</h3>
+                  <p class="text-[9px] text-indigo-400/50 font-mono mt-0.5">Text LoRA · SCADA / SAP histórico</p>
+                </div>
+              </div>
+              <div class="px-2 py-0.5 rounded-full bg-indigo-500/10 text-[9px] font-bold text-indigo-400 border border-indigo-500/20 uppercase tracking-widest">Text Pipeline</div>
+            </div>
+
+            <!-- Modelo activo -->
+            <div class="mb-4 flex items-center gap-2 bg-black/20 border border-indigo-500/10 rounded-lg px-3 py-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-indigo-400 shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              <span class="text-[10px] text-gray-500">Base model:</span>
+              <span class="text-[10px] font-mono font-bold text-indigo-300 truncate">{{ getBaseModel() || '—' }}</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div>
+                <label class="block text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1.5">Epochs</label>
+                <div class="flex items-center gap-2 bg-black/20 border border-indigo-500/10 rounded-lg p-0.5">
+                  <button @click="trainingEpochs = Math.max(1, trainingEpochs - 1)" class="w-6 h-6 flex items-center justify-center rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg>
+                  </button>
+                  <span class="w-8 text-center font-mono text-sm font-bold text-white">{{ trainingEpochs }}</span>
+                  <button @click="trainingEpochs = Math.min(20, trainingEpochs + 1)" class="w-6 h-6 flex items-center justify-center rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  </button>
+                </div>
+              </div>
+              <button
+                @click="handleRetrainText"
+                :disabled="isTrainingText || isTrainingVL"
+                class="flex-1 h-9 px-4 bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-500/30 text-white rounded-lg text-xs font-black flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(99,102,241,0.2)] active:scale-95"
+              >
+                <svg v-if="!isTrainingText" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>
+                <div v-else class="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                {{ isTrainingText ? 'Enqueuing...' : '⚡ Launch Text Training' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Tarjeta 2: VL (Vision-Language LoRA) -->
+          <div class="bg-gradient-to-br from-purple-500/10 to-pink-500/5 border border-purple-500/20 rounded-2xl p-5 backdrop-blur-3xl shadow-[0_0_30px_rgba(168,85,247,0.05)]">
+            <div class="flex items-center justify-between border-b border-purple-500/10 pb-3 mb-4">
+              <div class="flex items-center gap-2.5">
+                <div class="w-6 h-6 rounded bg-purple-500/20 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-purple-400"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </div>
+                <div>
+                  <h3 class="text-[11px] font-black text-purple-300 uppercase tracking-[0.15em]">Sistema 1 — Vision Language</h3>
+                  <p class="text-[9px] text-purple-400/50 font-mono mt-0.5">VL LoRA · Computer Use / SAP GUI</p>
+                </div>
+              </div>
+              <div class="px-2 py-0.5 rounded-full bg-purple-500/10 text-[9px] font-bold text-purple-400 border border-purple-500/20 uppercase tracking-widest">VL Pipeline</div>
+            </div>
+
+            <!-- Modelo activo -->
+            <div class="mb-4 flex items-center gap-2 bg-black/20 border border-purple-500/10 rounded-lg px-3 py-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-purple-400 shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              <span class="text-[10px] text-gray-500">Base model:</span>
+              <span class="text-[10px] font-mono font-bold text-purple-300 truncate">{{ getBaseModel() || '—' }}</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div>
+                <label class="block text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1.5">VL Epochs</label>
+                <div class="flex items-center gap-2 bg-black/20 border border-purple-500/10 rounded-lg p-0.5">
+                  <button @click="vlEpochs = Math.max(1, vlEpochs - 1)" class="w-6 h-6 flex items-center justify-center rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg>
+                  </button>
+                  <span class="w-8 text-center font-mono text-sm font-bold text-white">{{ vlEpochs }}</span>
+                  <button @click="vlEpochs = Math.min(20, vlEpochs + 1)" class="w-6 h-6 flex items-center justify-center rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  </button>
+                </div>
+              </div>
+              <button
+                @click="handleRetrainVL"
+                :disabled="isTrainingText || isTrainingVL"
+                class="flex-1 h-9 px-4 bg-purple-500 hover:bg-purple-600 disabled:bg-purple-500/30 text-white rounded-lg text-xs font-black flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(168,85,247,0.2)] active:scale-95"
+              >
+                <svg v-if="!isTrainingVL" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <div v-else class="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                {{ isTrainingVL ? 'Enqueuing...' : '⚡ Launch VL Training' }}
+              </button>
+            </div>
+          </div>
+
+        </div>
 
         <!-- Workspace Links -->
         <div class="grid grid-cols-3 gap-4 pb-20">

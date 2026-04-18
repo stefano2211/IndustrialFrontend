@@ -24,6 +24,7 @@ export const chatService = {
         onDone: (fullContent: string) => void,
         onError: (error: string) => void,
         onSubagent: (subagent: { status: string, name: string, input?: any }) => void = () => {},
+        onScreenshot: (screenshot: { b64: string, step: number, has_omniparser: boolean, action?: string, click?: { x: number, y: number, type: string } | null }) => void = () => {},
         useGeneralist: boolean = false
     ): Promise<void> {
         const token = localStorage.getItem('token')
@@ -78,6 +79,8 @@ export const chatService = {
                             onMeta(data)
                         } else if (data.type === 'subagent') {
                             onSubagent(data)
+                        } else if (data.type === 'screenshot') {
+                            onScreenshot(data.data)
                         } else if (data.type === 'done') {
                             onDone(data.full_content)
                         } else if (data.type === 'error') {

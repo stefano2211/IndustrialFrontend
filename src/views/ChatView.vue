@@ -19,7 +19,7 @@ const chatParams = inject<any>('chatParams', {})
 const isLoading = ref(false)
 const streamingContent = ref('')
 const chatContainer = ref<HTMLDivElement | null>(null)
-const useGeneralist = ref(false)
+const useGeneralist = ref(true)
 
 interface SubagentStatus {
   name: string
@@ -27,6 +27,21 @@ interface SubagentStatus {
   input?: any
 }
 const activeSubagents = ref<SubagentStatus[]>([])
+
+interface ClickPos { x: number; y: number; type: string }
+interface ScreenshotFrame {
+  b64: string
+  step: number
+  has_omniparser: boolean
+  action?: string | null
+  click?: ClickPos | null
+}
+const currentScreenshot = ref<ScreenshotFrame | null>(null)
+const showScreenViewer = ref(false)
+const isThinking = ref(false)
+const clickRipple = ref<ClickPos | null>(null)
+let _thinkingTimer: ReturnType<typeof setTimeout> | null = null
+let _rippleTimer: ReturnType<typeof setTimeout> | null = null
 
 function scrollToBottom() {
   nextTick(() => {
@@ -52,6 +67,12 @@ async function handleSendMessage(content: string) {
   isLoading.value = true
   streamingContent.value = ''
   activeSubagents.value = []
+  currentScreenshot.value = null
+  showScreenViewer.value = false
+  isThinking.value = false
+  clickRipple.value = null
+  if (_thinkingTimer) { clearTimeout(_thinkingTimer); _thinkingTimer = null }
+  if (_rippleTimer)   { clearTimeout(_rippleTimer);   _rippleTimer   = null }
   scrollToBottom()
 
   try {
@@ -88,6 +109,8 @@ async function handleSendMessage(content: string) {
         activeMessages.value.push(assistantMsg)
         streamingContent.value = ''
         isLoading.value = false
+        isThinking.value = false
+        if (_thinkingTimer) { clearTimeout(_thinkingTimer); _thinkingTimer = null }
 
         const threadId = activeThreadId.value || 'unknown'
         onMessageSent(threadId, { role: 'user', content }, assistantMsg)
@@ -101,6 +124,9 @@ async function handleSendMessage(content: string) {
         streamingContent.value = ''
         activeSubagents.value = []
         isLoading.value = false
+        isThinking.value = false
+        if (_thinkingTimer) { clearTimeout(_thinkingTimer); _thinkingTimer = null }
+        // Keep viewer open on error so user can see last known state
       },
       // onSubagent
       (subagent: { status: string, name: string, input?: any }) => {
@@ -115,6 +141,24 @@ async function handleSendMessage(content: string) {
           })
         }
         scrollToBottom()
+      },
+      // onScreenshot
+      (screenshot: { b64: string, step: number, has_omniparser: boolean, action?: string, click?: ClickPos | null }) => {
+        currentScreenshot.value = screenshot
+        showScreenViewer.value = true
+        // Reset thinking indicator
+        isThinking.value = false
+        if (_thinkingTimer) clearTimeout(_thinkingTimer)
+        // Show click ripple if there was a click
+        if (screenshot.click) {
+          if (_rippleTimer) clearTimeout(_rippleTimer)
+          clickRipple.value = screenshot.click
+          _rippleTimer = setTimeout(() => { clickRipple.value = null }, 800)
+        }
+        // Start thinking timer — if no new screenshot in 2s, show thinking badge
+        _thinkingTimer = setTimeout(() => {
+          if (isLoading.value) isThinking.value = true
+        }, 2000)
       },
       // useGeneralist
       useGeneralist.value
@@ -136,7 +180,10 @@ function copyMessage(content: string) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-full relative overflow-hidden bg-transparent">
+  <div class="flex h-full w-full relative overflow-hidden bg-transparent">
+
+    <!-- Main Chat Area -->
+    <div class="flex flex-col flex-1 min-w-0 relative overflow-hidden">
     
     <!-- Loading Messages Spinner -->
     <div v-if="isLoadingMessages" class="flex-1 flex items-center justify-center">
@@ -264,5 +311,148 @@ function copyMessage(content: string) {
         @send="handleSendMessage"
       />
     </div>
-  </div>
+    </div><!-- end main chat area -->
+
+    <!-- Live Screen Viewer Panel (RIGHT side) -->
+    <transition name="slide-right">
+      <div
+        v-if="showScreenViewer && currentScreenshot"
+        class="hidden lg:flex flex-col flex-shrink-0 w-[480px] border-l border-white/[0.06] bg-[#141414]"
+      >
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full" :class="isLoading ? 'bg-emerald-400 animate-pulse' : 'bg-white/30'"></div>
+            <span class="text-[12px] font-medium text-white/70 font-mono">sistema1-vl</span>
+            <span class="text-[11px] text-white/30">step {{ currentScreenshot.step }}</span>
+            <span v-if="currentScreenshot.has_omniparser" class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">SoM</span>
+          </div>
+          <button @click="showScreenViewer = false" class="text-white/30 hover:text-white/60 transition-colors p-1 rounded hover:bg-white/5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <!-- Screenshot with crossfade between frames -->
+        <div class="flex-1 overflow-hidden relative bg-black">
+          <transition name="screenshot-fade" mode="out-in">
+            <img
+              :key="currentScreenshot.step"
+              :src="`data:image/png;base64,${currentScreenshot.b64}`"
+              class="w-full h-full object-contain"
+              alt="Agent screen"
+            />
+          </transition>
+
+          <!-- Click ripple animation -->
+          <div
+            v-if="clickRipple"
+            class="click-ripple"
+            :style="{ left: clickRipple.x + '%', top: clickRipple.y + '%' }"
+          />
+
+          <!-- Thinking badge (shown when AI is processing between screenshots) -->
+          <transition name="action-fade">
+            <div
+              v-if="isThinking"
+              class="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-[11px] font-mono text-white/50"
+            >
+              <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+              Procesando...
+            </div>
+          </transition>
+
+          <!-- Action label overlay -->
+          <transition name="action-fade">
+            <div
+              v-if="currentScreenshot.action"
+              :key="currentScreenshot.step + '-action'"
+              class="absolute bottom-3 left-3 right-3 text-[10px] font-mono text-white/50 bg-black/60 rounded px-2 py-1 truncate backdrop-blur-sm border border-white/[0.06]"
+            >
+              ↳ {{ currentScreenshot.action }}
+            </div>
+          </transition>
+        </div>
+        <!-- Loading scan-line bar -->
+        <div v-if="isLoading" class="h-[2px] bg-white/5 overflow-hidden">
+          <div class="h-full bg-emerald-400/50 animate-scan"></div>
+        </div>
+      </div>
+    </transition>
+
+  </div><!-- end outer flex -->
 </template>
+
+<style scoped>
+/* ── Panel slide-in from right ────────────────────────────────────────────── */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.25s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+/* ── Screenshot crossfade (video-like frame transition) ───────────────────── */
+.screenshot-fade-enter-active {
+  transition: opacity 0.15s ease;
+}
+.screenshot-fade-leave-active {
+  transition: opacity 0.1s ease;
+  position: absolute;
+  inset: 0;
+}
+.screenshot-fade-enter-from,
+.screenshot-fade-leave-to {
+  opacity: 0;
+}
+
+/* ── Action label fade ────────────────────────────────────────────────────── */
+.action-fade-enter-active,
+.action-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.action-fade-enter-from,
+.action-fade-leave-to {
+  opacity: 0;
+}
+
+/* ── Scan-line animation (loading indicator) ──────────────────────────────── */
+@keyframes scan {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+.animate-scan {
+  width: 25%;
+  animation: scan 1.2s ease-in-out infinite;
+}
+
+/* ── Click ripple animation ────────────────────────────────────────────────── */
+@keyframes ripple {
+  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(3);   opacity: 0; }
+}
+@keyframes ripple-inner {
+  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+  40%  { transform: translate(-50%, -50%) scale(1.3); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1);   opacity: 0.6; }
+}
+.click-ripple {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(110, 231, 183, 0.95);
+  animation: ripple 0.75s ease-out forwards;
+  pointer-events: none;
+  z-index: 10;
+}
+.click-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: rgba(110, 231, 183, 0.5);
+  animation: ripple-inner 0.75s ease-out forwards;
+}
+</style>
