@@ -12,6 +12,7 @@ const props = defineProps<{
   conversations: Conversation[]
   activeThreadId: string | null
   userName: string
+  pendingEvents?: number
 }>()
 
 const emit = defineEmits<{
@@ -101,6 +102,18 @@ function getInitials(name: string): string {
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#b4b4b4]"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
           Notes
         </button>
+
+        <router-link
+          to="/events"
+          class="flex items-center gap-3 px-3 py-2.5 w-full text-left text-[14px] font-medium text-[#b4b4b4] hover:bg-white/5 rounded-xl transition-colors group"
+          active-class="bg-white/5 !text-white"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#b4b4b4]"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Eventos
+          <span v-if="(pendingEvents ?? 0) > 0" class="ml-auto px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+            {{ pendingEvents }}
+          </span>
+        </router-link>
 
         <router-link
           to="/workspace"

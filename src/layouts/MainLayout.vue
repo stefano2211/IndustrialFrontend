@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, provide, reactive } from 'vue'
+import { ref, onMounted, onUnmounted, provide, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import ChatControls from '@/components/chat/ChatControls.vue'
@@ -9,9 +9,12 @@ import modelService from '@/services/modelService'
 import toolService, { type MCPSource } from '@/services/toolService'
 import api from '@/services/api'
 import { systemService } from '@/services/systemService'
+import eventService from '@/services/eventService'
 
 const router = useRouter()
 const isSidebarOpen = ref(true)
+const pendingEventsCount = ref(0)
+let pendingEventsPollTimer: ReturnType<typeof setInterval> | null = null
 const isControlsOpen = ref(false)
 const isHeaderMenuOpen = ref(false)
 
@@ -59,6 +62,13 @@ const activeMcpSourceId = ref<string | null>(null)
 
 function toggleSidebar() {
   isSidebarOpen.value = !isSidebarOpen.value
+}
+
+async function pollPendingEvents() {
+  try {
+    const res = await eventService.listEvents({ status: 'awaiting_approval', limit: 1 })
+    pendingEventsCount.value = res.total
+  } catch {}
 }
 
 // Load user info
@@ -268,8 +278,13 @@ onMounted(() => {
   loadMcpSources()
   loadModelInfo()
   loadStats()
-  // Refresh stats every minute
+  pollPendingEvents()
   setInterval(loadStats, 60000)
+  pendingEventsPollTimer = setInterval(pollPendingEvents, 30000)
+})
+
+onUnmounted(() => {
+  if (pendingEventsPollTimer) clearInterval(pendingEventsPollTimer)
 })
 </script>
 
@@ -280,6 +295,7 @@ onMounted(() => {
       :conversations="conversations"
       :active-thread-id="activeThreadId"
       :user-name="userName"
+      :pending-events="pendingEventsCount"
       @new-chat="handleNewChat"
       @select-conversation="handleSelectConversation"
       @archive-conversation="handleArchiveConversation"

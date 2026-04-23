@@ -13,6 +13,7 @@ import AdminLayout from '../views/admin/AdminLayout.vue'
 import UsersView from '../views/admin/UsersView.vue'
 import AnalyticsView from '../views/admin/AnalyticsView.vue'
 import SettingsView from '../views/admin/SettingsView.vue'
+import EventsView from '../views/EventsView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,12 @@ const router = createRouter({
             path: '/chat',
             name: 'chat',
             component: ChatView,
+            meta: { layout: 'main', requiresAuth: true }
+        },
+        {
+            path: '/events',
+            name: 'events',
+            component: EventsView,
             meta: { layout: 'main', requiresAuth: true }
         },
         {
