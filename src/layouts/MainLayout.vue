@@ -289,75 +289,63 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen w-full bg-[#171717] overflow-hidden">
-    <Sidebar 
-      :is-open="isSidebarOpen" 
+  <div class="h-screen w-screen bg-[#0a0a0a] text-white flex overflow-hidden">
+    <!-- Left Sidebar -->
+    <Sidebar
+      :is-open="isSidebarOpen"
       :conversations="conversations"
       :active-thread-id="activeThreadId"
       :user-name="userName"
       :pending-events="pendingEventsCount"
+      @toggle="toggleSidebar"
       @new-chat="handleNewChat"
       @select-conversation="handleSelectConversation"
-      @archive-conversation="handleArchiveConversation"
-      @archive-action="handleOpenArchived"
-      @logout="handleLogout"
     />
 
     <!-- Main Content Area Wrapper -->
-    <main class="flex-1 flex flex-col relative bg-[#212121] min-w-0">
+    <main class="flex-1 flex flex-col relative bg-[#0a0a0a] min-w-0">
       <!-- Top header -->
-      <header class="h-14 shrink-0 flex items-center justify-between px-4 sticky top-0 w-full z-10 bg-[#212121]">
-        <!-- Left: sidebar toggle + model name -->
-        <div class="pointer-events-auto flex items-center h-full">
-          <button 
-            @click="toggleSidebar" 
-            class="p-2 hover:bg-white/5 rounded-lg text-[#b4b4b4] hover:text-white transition-all"
-            aria-label="Toggle Sidebar"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
-          </button>
-          
-          <slot name="header">
-            <div class="ml-3 flex items-center gap-3 relative">
-              <div 
-                @click="toggleModelDropdown" 
-                class="flex items-center gap-2 text-lg font-medium cursor-pointer hover:bg-white/5 px-3 py-1.5 rounded-xl transition-colors group text-white"
-              >
-                {{ activeModelName }}
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#7a7a7a] group-hover:text-[#b4b4b4] mt-0.5 transition-all" :class="{ 'rotate-180': showModelDropdown }"><path d="m6 9 6 6 6-6"/></svg>
-              </div>
+      <header class="h-14 shrink-0 flex items-center justify-between px-5 sticky top-0 w-full z-10 bg-[#0a0a0a] border-b border-white/[0.06]">
+        <!-- Left: breadcrumb -->
+        <div class="flex items-center gap-2 text-[13px]">
+          <span class="text-[#555] font-medium">Aura AI</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#333]"><path d="m9 18 6-6-6-6"/></svg>
+          <span class="text-[#b4b4b4] font-medium">Chat</span>
+        </div>
 
-              <!-- Model Selector Dropdown -->
-              <Teleport to="body">
-                <Transition name="dropdown">
-                  <div v-if="showModelDropdown" class="fixed top-14 left-16 w-64 bg-[#2f2f2f] rounded-2xl shadow-2xl border border-white/[0.08] z-[10000] overflow-hidden">
-                    <div class="p-2 space-y-1 max-h-[400px] overflow-y-auto custom-scrollbar">
-                      <div class="px-3 py-1.5 text-[11px] font-semibold text-[#7a7a7a] uppercase tracking-wider">Available Models</div>
-                      <button 
-                        v-for="model in availableModels" 
-                        :key="model.id"
-                        @click="selectModel(model)"
-                        class="flex items-center gap-3 w-full px-3 py-2 text-[13px] rounded-lg transition-colors"
-                        :class="activeModelId === model.id ? 'bg-white/10 text-white' : 'text-[#ececec] hover:bg-white/5'"
-                      >
-                        <div class="w-2 h-2 rounded-full" :class="activeModelId === model.id ? 'bg-indigo-400' : 'bg-[#7a7a7a]'"></div>
-                        <span class="truncate">{{ model.name }}</span>
-                      </button>
-                      <div class="border-t border-white/[0.05] mt-2 pt-2">
-                        <button 
-                          @click="showModelDropdown = false; router.push('/workspace/models')" 
-                          class="flex items-center gap-3 w-full px-3 py-2 text-[13px] text-indigo-400 hover:bg-white/5 rounded-lg transition-colors"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-                          Manage Models
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </Transition>
-              </Teleport>
-            </div>
-          </slot>
+        <!-- Right: model + user -->
+        <div class="flex items-center gap-3">
+          <!-- Model Selector -->
+          <button
+            @click="toggleModelDropdown"
+            class="flex items-center gap-2 px-2.5 py-1 rounded-lg text-[12px] font-medium border border-white/[0.06] hover:border-white/10 transition-all"
+            :class="showModelDropdown ? 'bg-white/[0.04] text-white' : 'text-[#7a7a7a] hover:text-[#b4b4b4]'"
+          >
+            <div class="w-1.5 h-1.5 rounded-full" :class="availableModels.length > 0 ? 'bg-emerald-400' : 'bg-red-400'"></div>
+            <span class="truncate max-w-[120px]">{{ activeModelName }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+
+          <!-- Model Selector Dropdown -->
+          <Teleport to="body">
+            <Transition name="dropdown">
+              <div v-if="showModelDropdown" class="fixed top-14 left-auto right-20 w-64 bg-[#1c1c1c] rounded-xl shadow-2xl border border-white/[0.08] z-[10000] overflow-hidden">
+                <div class="p-2 space-y-1 max-h-[400px] overflow-y-auto">
+                  <div class="px-3 py-1.5 text-[11px] font-semibold text-[#555] uppercase tracking-wider">Available Models</div>
+                  <button
+                    v-for="model in availableModels"
+                    :key="model.id"
+                    @click="selectModel(model)"
+                    class="group w-full text-left px-2.5 py-2 rounded-lg text-[12px] transition-colors truncate"
+                    :class="activeModelId === model.id ? 'bg-white/[0.06] text-white font-medium' : 'text-[#888] hover:text-white hover:bg-white/[0.04]'"
+                  >
+                    <div class="w-2 h-2 rounded-full inline-block mr-2" :class="activeModelId === model.id ? 'bg-emerald-400' : 'bg-[#555]'"></div>
+                    <span class="truncate">{{ model.name }}</span>
+                  </button>
+                </div>
+              </div>
+            </Transition>
+          </Teleport>
         </div>
 
         <!-- Right: controls icons -->
@@ -367,8 +355,8 @@ onUnmounted(() => {
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
           </button>
           <!-- Controls (sliders icon) -->
-          <button 
-            @click="isControlsOpen = !isControlsOpen" 
+          <button
+            @click="isControlsOpen = !isControlsOpen"
             class="p-2 hover:bg-white/5 rounded-lg transition-colors"
             :class="isControlsOpen ? 'text-white bg-white/5' : 'text-[#7a7a7a] hover:text-white'"
             title="Model Controls"
@@ -377,11 +365,11 @@ onUnmounted(() => {
           </button>
           <!-- User avatar with dropdown -->
           <div class="relative ml-1">
-            <button 
+            <button
               @click="isHeaderMenuOpen = !isHeaderMenuOpen"
               class="w-8 h-8 rounded-full bg-[#7a7a7a]/30 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#b4b4b4]"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </button>
 
             <!-- Dropdown menu -->
@@ -420,7 +408,7 @@ onUnmounted(() => {
           </div>
         </div>
       </header>
-      
+
       <!-- Injected Child Route Content -->
       <div class="flex-1 flex flex-col w-full h-full">
         <RouterView />
@@ -428,7 +416,7 @@ onUnmounted(() => {
     </main>
 
     <!-- Controls Drawer -->
-    <ChatControls 
+    <ChatControls
       :is-open="isControlsOpen"
       :params="chatParams"
       @close="isControlsOpen = false"
@@ -457,16 +445,16 @@ onUnmounted(() => {
             <div v-else-if="archivedConversations.length === 0" class="py-12 text-center text-[#7a7a7a]">
               No archived chats found.
             </div>
-            <div 
-              v-for="conv in archivedConversations" 
+            <div
+              v-for="conv in archivedConversations"
               :key="conv.thread_id"
               class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/[0.05] hover:border-white/10 transition-all group"
             >
               <div class="truncate mr-4">
-                <div class="text-[14px] text-white font-medium truncate">{{ conv.title }}</div>
-                <div class="text-[11px] text-[#7a7a7a]">{{ new Date(conv.updated_at).toLocaleDateString() }}</div>
+                <div class="text-[14px] font-medium truncate">{{ conv.title }}</div>
+                <div class="text-[11px] text-[#555]">{{ new Date(conv.updated_at).toLocaleDateString() }}</div>
               </div>
-              <button 
+              <button
                 @click="handleUnarchive(conv.thread_id)"
                 class="shrink-0 p-2 text-[#7a7a7a] hover:text-white hover:bg-white/5 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                 title="Unarchive"

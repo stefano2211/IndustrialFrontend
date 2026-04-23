@@ -61,97 +61,94 @@ function getInitials(name: string): string {
 </script>
 
 <template>
-  <aside 
-    class="bg-[#171717] transition-all duration-300 ease-in-out flex flex-col relative z-20 h-full shrink-0"
-    :class="isOpen ? 'w-[260px]' : 'w-0 overflow-hidden opacity-0'"
+  <aside
+    class="bg-[#0f0f0f] border-r border-white/[0.06] transition-all duration-300 ease-in-out flex flex-col relative z-20 h-full shrink-0"
+    :class="isOpen ? 'w-[240px]' : 'w-0 overflow-hidden opacity-0'"
   >
     <!-- Logo & Title -->
-    <div class="p-4 flex items-center justify-between">
-      <div @click="emit('new-chat')" class="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl cursor-pointer w-full text-sm font-medium transition-all group">
-        <div class="w-8 h-8 bg-white text-black font-bold rounded-lg flex items-center justify-center text-xs shadow-sm">
-          {{ getInitials(userName) }}
-        </div>
-        <span class="tracking-wide text-white whitespace-nowrap">Aura AI</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-auto text-[#7a7a7a] group-hover:translate-x-0.5 transition-transform shrink-0"><path d="m9 18 6-6-6-6"/></svg>
+    <div class="px-4 py-3 flex items-center gap-2 border-b border-white/[0.06]">
+      <div class="w-7 h-7 rounded-md bg-white flex items-center justify-center shrink-0">
+        <span class="text-black font-bold text-[10px]">{{ getInitials(userName) }}</span>
       </div>
+      <span class="text-[13px] font-semibold text-white tracking-tight">Aura AI</span>
     </div>
 
     <!-- Scrollable Chat List -->
     <div class="px-3 mt-1 flex-grow overflow-y-auto custom-sidebar-scroll">
       
       <!-- Main Actions -->
-      <div class="mb-4 space-y-0.5 mt-1">
-        <button 
+      <div class="mb-3 space-y-0.5 mt-2 px-2">
+        <button
           @click="emit('new-chat')"
-          class="flex items-center gap-3 px-3 py-2.5 w-full text-left text-[14px] font-medium text-[#ececec] hover:bg-white/5 rounded-xl transition-colors"
+          class="flex items-center gap-2.5 px-2.5 py-2 w-full text-left text-[13px] font-medium text-[#b4b4b4] hover:bg-white/[0.04] hover:text-[#ececec] rounded-lg transition-colors"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#b4b4b4]"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#7a7a7a]"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           New Chat
         </button>
 
-        <button 
-          class="flex items-center gap-3 px-3 py-2.5 w-full text-left text-[14px] font-medium text-[#b4b4b4] hover:bg-white/5 rounded-xl transition-colors"
+        <button
+          class="flex items-center gap-2.5 px-2.5 py-2 w-full text-left text-[13px] font-medium text-[#b4b4b4] hover:bg-white/[0.04] hover:text-[#ececec] rounded-lg transition-colors"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#b4b4b4]"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#7a7a7a]"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           Search
         </button>
 
-        <button 
-          class="flex items-center gap-3 px-3 py-2.5 w-full text-left text-[14px] font-medium text-[#b4b4b4] hover:bg-white/5 rounded-xl transition-colors"
+        <button
+          class="flex items-center gap-2.5 px-2.5 py-2 w-full text-left text-[13px] font-medium text-[#b4b4b4] hover:bg-white/[0.04] hover:text-[#ececec] rounded-lg transition-colors"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#b4b4b4]"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#7a7a7a]"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
           Notes
         </button>
 
         <router-link
           to="/events"
-          class="flex items-center gap-3 px-3 py-2.5 w-full text-left text-[14px] font-medium text-[#b4b4b4] hover:bg-white/5 rounded-xl transition-colors group"
-          active-class="bg-white/5 !text-white"
+          class="flex items-center gap-2.5 px-2.5 py-2 w-full text-left text-[13px] font-medium text-[#b4b4b4] hover:bg-white/[0.04] hover:text-[#ececec] rounded-lg transition-colors"
+          active-class="bg-white/[0.06] !text-white"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#b4b4b4]"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#7a7a7a]"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           Eventos
-          <span v-if="(pendingEvents ?? 0) > 0" class="ml-auto px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+          <span v-if="(pendingEvents ?? 0) > 0" class="ml-auto px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
             {{ pendingEvents }}
           </span>
         </router-link>
 
         <router-link
           to="/workspace"
-          class="flex items-center gap-3 px-3 py-2.5 w-full text-left text-[14px] font-medium text-[#b4b4b4] hover:bg-white/5 rounded-xl transition-colors group"
-          active-class="bg-white/5 !text-white"
+          class="flex items-center gap-2.5 px-2.5 py-2 w-full text-left text-[13px] font-medium text-[#b4b4b4] hover:bg-white/[0.04] hover:text-[#ececec] rounded-lg transition-colors"
+          active-class="bg-white/[0.06] !text-white"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#b4b4b4]"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[#7a7a7a]"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
           Workspace
         </router-link>
       </div>
       
       <!-- Grouped Conversations -->
       <template v-for="(convs, dateLabel) in groupedConversations()" :key="dateLabel">
-        <div class="text-[12px] font-medium text-[#7a7a7a] mb-1.5 px-3 mt-6 uppercase tracking-wide">{{ dateLabel }}</div>
-        <div class="space-y-0.5 mb-2">
-          <div 
-            v-for="conv in convs" 
+        <div class="text-[11px] font-medium text-[#555] mb-1 px-3 mt-5 uppercase tracking-widest">{{ dateLabel }}</div>
+        <div class="space-y-0.5 mb-2 px-2">
+          <div
+            v-for="conv in convs"
             :key="conv.thread_id"
             @click="emit('select-conversation', conv.thread_id)"
-            class="group w-full text-left px-3 py-2 text-[14px] rounded-xl truncate transition-colors flex items-center gap-3 cursor-pointer"
-            :class="conv.thread_id === activeThreadId 
-              ? 'bg-white/[0.08] text-[#ececec] font-medium' 
-              : 'text-[#b4b4b4] hover:bg-white/[0.04] hover:text-[#ececec]'"
+            class="group w-full text-left px-2.5 py-1.5 text-[13px] rounded-lg truncate transition-colors flex items-center gap-2 cursor-pointer"
+            :class="conv.thread_id === activeThreadId
+              ? 'bg-white/[0.06] text-[#ececec] font-medium'
+              : 'text-[#7a7a7a] hover:bg-white/[0.03] hover:text-[#b4b4b4]'"
           >
             <span class="truncate flex-1">{{ conv.title }}</span>
-            <button 
+            <button
               @click.stop="emit('archive-conversation', conv.thread_id)"
-              class="shrink-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded-lg transition-all text-[#7a7a7a] hover:text-white"
+              class="shrink-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded-md transition-all text-[#555] hover:text-white"
               title="Archive"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
             </button>
           </div>
         </div>
       </template>
-      
+
       <!-- Empty state -->
-      <div v-if="conversations.length === 0" class="text-center text-[#7a7a7a] text-xs mt-8 px-4">
+      <div v-if="conversations.length === 0" class="text-center text-[#555] text-[12px] mt-6 px-4">
         No conversations yet. Start a new chat!
       </div>
     </div>
@@ -160,15 +157,15 @@ function getInitials(name: string): string {
     <div class="p-3 mt-auto shrink-0 mb-1 relative">
       <!-- Profile popup menu -->
       <Transition name="popup">
-        <div 
-          v-if="showProfileMenu" 
-          class="absolute bottom-full left-3 right-3 mb-2 bg-[#2f2f2f] rounded-2xl shadow-2xl border border-white/[0.08] overflow-hidden z-30"
+        <div
+          v-if="showProfileMenu"
+          class="absolute bottom-full left-3 right-3 mb-2 bg-[#1c1c1c] rounded-2xl shadow-2xl border border-white/[0.08] overflow-hidden z-30"
         >
           <!-- User info header -->
           <div class="px-4 py-3 border-b border-white/[0.06]">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 shrink-0 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <div class="w-9 h-9 shrink-0 bg-white/10 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
               <div>
                 <div class="text-[14px] font-semibold text-white">{{ userName || 'User' }}</div>
@@ -214,14 +211,12 @@ function getInitials(name: string): string {
       <!-- Profile button trigger -->
       <button 
         @click="showProfileMenu = !showProfileMenu"
-        class="flex items-center gap-3 px-3 py-2.5 w-full text-left text-sm text-[#ececec] hover:bg-white/5 rounded-xl transition-colors"
+        class="flex items-center gap-2.5 px-2.5 py-2 w-full text-left text-[13px] text-[#b4b4b4] hover:bg-white/[0.04] hover:text-[#ececec] rounded-lg transition-colors"
       >
-        <div class="w-8 h-8 shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 rounded-full flex items-center justify-center text-[12px] font-bold text-white shadow-sm">
+        <div class="w-7 h-7 shrink-0 bg-white/10 rounded-full flex items-center justify-center text-[10px] font-bold text-white">
           {{ getInitials(userName) }}
         </div>
-        <div class="flex flex-col overflow-hidden">
-          <span class="font-medium truncate text-[14px]">{{ userName || 'User' }}</span>
-        </div>
+        <span class="font-medium truncate">{{ userName || 'User' }}</span>
       </button>
     </div>
   </aside>

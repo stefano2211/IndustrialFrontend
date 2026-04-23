@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import eventService, { type IndustrialEvent, type EventSeverity, type EventStatus, type EventSourceType } from '@/services/eventService'
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -199,21 +199,21 @@ function formatDate(d: string) {
   <div class="flex h-full bg-[#0f0f0f] text-white overflow-hidden">
 
     <!-- ── LEFT: Event list ─────────────────────────────────────────────── -->
-    <div class="w-[340px] shrink-0 flex flex-col border-r border-white/[0.06] h-full">
+    <div class="w-[340px] shrink-0 flex flex-col border-r border-white/[0.06] h-full bg-[#0d0d0d]">
 
       <!-- Header -->
       <div class="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-400 shrink-0"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          <span class="font-semibold text-[15px]">Eventos</span>
+          <span class="font-semibold text-[15px] text-white tracking-tight">Operations Center</span>
           <span v-if="pendingApprovalCount > 0" class="px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
             {{ pendingApprovalCount }}
           </span>
         </div>
         <div class="flex items-center gap-2">
           <!-- SSE indicator -->
-          <div class="flex items-center gap-1.5" :title="sseConnected ? 'Stream conectado' : 'Reconectando…'">
-            <div class="w-2 h-2 rounded-full" :class="sseConnected ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'"></div>
+          <div class="flex items-center gap-1.5" :title="sseConnected ? 'Live' : 'Reconnecting…'">
+            <div class="w-1.5 h-1.5 rounded-full" :class="sseConnected ? 'bg-emerald-400 animate-pulse' : 'bg-gray-600'"></div>
+            <span class="text-[10px] text-[#666] uppercase tracking-wider">{{ sseConnected ? 'LIVE' : 'OFFLINE' }}</span>
           </div>
           <button
             @click="showCreateModal = true"

@@ -39,7 +39,7 @@ const router = createRouter({
             path: '/events',
             name: 'events',
             component: EventsView,
-            meta: { layout: 'main', requiresAuth: true }
+            meta: { layout: 'dashboard', requiresAuth: true }
         },
         {
             path: '/workspace',
@@ -120,8 +120,8 @@ router.beforeEach((to, _from, next) => {
         // Not authenticated → redirect to login
         next({ name: 'login' })
     } else if ((to.name === 'login' || to.name === 'register' || to.name === 'home') && token) {
-        // Already logged in → redirect to chat
-        next({ name: 'chat' })
+        // Already logged in → redirect to reactive events panel (home)
+        next({ name: 'events' })
     } else {
         next()
     }

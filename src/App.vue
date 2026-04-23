@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import AuthLayout from './layouts/AuthLayout.vue'
 import MainLayout from './layouts/MainLayout.vue'
+import DashboardLayout from './layouts/DashboardLayout.vue'
 
 const route = useRoute()
 
@@ -10,6 +11,7 @@ const route = useRoute()
 const layoutComponent = computed(() => {
   if (route.meta.layout === 'auth') return AuthLayout
   if (route.meta.layout === 'main') return MainLayout
+  if (route.meta.layout === 'dashboard') return DashboardLayout
   // Fallback to minimal wrapper if no layout specified
   return 'div'
 })

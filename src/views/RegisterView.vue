@@ -41,49 +41,49 @@ async function handleRegister() {
 </script>
 
 <template>
-  <div class="relative w-full max-w-md px-8 py-10 glass rounded-3xl shadow-2xl transition-all duration-300 mx-auto z-10">
+  <div class="relative w-full max-w-md px-8 py-10 bg-[#0f0f0f] border border-white/[0.08] rounded-2xl shadow-2xl transition-all duration-300 mx-auto z-10">
     <!-- Header -->
     <div class="flex flex-col items-center mb-10">
-      <div class="w-14 h-14 bg-gradient-to-br from-white to-gray-300 text-black font-bold rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-lg shadow-white/5 border border-white/20">
+      <div class="w-14 h-14 bg-white text-black font-bold rounded-xl flex items-center justify-center text-2xl mb-6 shadow-lg shadow-white/5">
         OI
       </div>
-      <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Create Account</h1>
+      <h1 class="text-3xl font-bold text-white">Create Account</h1>
       <p class="text-gray-400 text-sm mt-3 text-center tracking-wide">Join the AI Workspace</p>
     </div>
 
     <form @submit.prevent="handleRegister" class="space-y-5">
       <div class="space-y-1.5">
         <label class="block text-sm font-medium text-gray-300 ml-1" for="name">Full Name</label>
-        <input 
+        <input
           v-model="name"
-          id="name" 
-          type="text" 
+          id="name"
+          type="text"
           required
-          class="w-full bg-black/50 border border-white/10 rounded-2xl px-5 py-3.5 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-gray-100 placeholder-gray-600"
+          class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 outline-none focus:border-white/20 transition-all text-white placeholder-[#555]"
           placeholder="John Doe"
         >
       </div>
 
       <div class="space-y-1.5">
         <label class="block text-sm font-medium text-gray-300 ml-1" for="email">Email</label>
-        <input 
+        <input
           v-model="email"
-          id="email" 
-          type="email" 
+          id="email"
+          type="email"
           required
-          class="w-full bg-black/50 border border-white/10 rounded-2xl px-5 py-3.5 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-gray-100 placeholder-gray-600"
+          class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 outline-none focus:border-white/20 transition-all text-white placeholder-[#555]"
           placeholder="you@example.com"
         >
       </div>
       
       <div class="space-y-1.5">
         <label class="block text-sm font-medium text-gray-300 ml-1" for="password">Password</label>
-        <input 
+        <input
           v-model="password"
-          id="password" 
-          type="password" 
+          id="password"
+          type="password"
           required
-          class="w-full bg-black/50 border border-white/10 rounded-2xl px-5 py-3.5 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-gray-100 placeholder-gray-600 tracking-widest"
+          class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 outline-none focus:border-white/20 transition-all text-white placeholder-[#555] tracking-widest"
           placeholder="••••••••"
         >
       </div>
@@ -92,19 +92,16 @@ async function handleRegister() {
         {{ errorMessage }}
       </div>
 
-      <button 
-        type="submit" 
+      <button
+        type="submit"
         :disabled="isLoading"
-        class="w-full relative group mt-8 overflow-hidden rounded-2xl disabled:opacity-70 disabled:cursor-not-allowed"
+        class="w-full mt-8 rounded-xl bg-white text-black font-semibold text-[15px] px-4 py-3.5 hover:bg-gray-200 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
       >
-        <div class="absolute inset-0 bg-white transition-all duration-300 group-hover:scale-[1.02]"></div>
-        <div class="relative flex justify-center items-center gap-2 px-4 py-3.5 text-black font-semibold text-[15px]">
-          <span v-if="!isLoading">Sign Up</span>
-          <svg v-else class="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        </div>
+        <span v-if="!isLoading">Sign Up</span>
+        <svg v-else class="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
       </button>
     </form>
 

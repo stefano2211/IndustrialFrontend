@@ -1,12 +1,12 @@
 <template>
-  <div class="flex flex-col h-full bg-[#171717] text-[#ececec]">
-    <!-- Tab Navigation (Clean, minimal header) -->
-    <nav class="flex items-center gap-1 px-6 pt-5 pb-0 sticky top-0 bg-[#171717]/80 backdrop-blur-md z-10 w-full shrink-0 overflow-x-auto no-scrollbar">
+  <div class="flex flex-col h-full bg-[#0f0f0f] text-[#ececec]">
+    <!-- Tab Navigation -->
+    <nav class="flex items-center gap-1 px-6 pt-4 pb-0 sticky top-0 bg-[#0f0f0f] z-10 w-full shrink-0 overflow-x-auto no-scrollbar border-b border-white/[0.06]">
       <router-link
         v-for="tab in tabs"
         :key="tab.path"
         :to="tab.path"
-        class="text-[13px] font-bold px-4 py-2.5 -mb-[1px] border-b-2 border-transparent transition-all uppercase tracking-widest"
+        class="text-[13px] font-medium px-4 py-2.5 -mb-[1px] border-b-2 border-transparent transition-all tracking-tight"
         active-class="!text-white !border-white"
         :class="$route.path.startsWith(tab.path) ? '' : 'text-[#7a7a7a] hover:text-[#b4b4b4]'"
       >

@@ -58,10 +58,10 @@
       <!-- Grid -->
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <router-link
-          v-for="kb in filteredCollections" 
+          v-for="kb in filteredCollections"
           :key="kb.id"
           :to="{ name: 'knowledge-detail', params: { id: kb.id } }"
-          class="group bg-[#2f2f2f]/30 hover:bg-[#2f2f2f]/50 border border-white/[0.06] rounded-2xl p-5 transition-all cursor-pointer relative flex flex-col h-48 overflow-hidden hover:border-white/10"
+          class="group bg-white/[0.03] hover:bg-white/[0.04] border border-white/[0.06] rounded-xl p-5 transition-all cursor-pointer relative flex flex-col h-48 overflow-hidden hover:border-white/10"
         >
           <div class="flex items-start justify-between mb-4 relative z-10">
             <div class="w-10 h-10 rounded-xl bg-[#171717] flex items-center justify-center border border-white/[0.06] group-hover:border-white/10 transition-colors">
@@ -88,7 +88,7 @@
     <Teleport to="body">
       <div v-if="showCreateModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in">
         <div 
-          class="bg-[#2f2f2f] border border-white/10 rounded-2xl w-full max-w-[420px] shadow-2xl p-6 relative overflow-hidden"
+          class="bg-[#1c1c1c] border border-white/[0.08] rounded-2xl w-full max-w-[420px] shadow-2xl p-6 relative overflow-hidden"
           @click.stop
         >
           <h3 class="text-lg font-semibold text-white mb-1">Create new collection</h3>
@@ -97,11 +97,11 @@
           <div class="space-y-4 mb-6">
             <div>
               <label class="block text-[12px] font-medium text-[#b4b4b4] mb-1.5 ml-0.5">Name</label>
-              <input 
-                v-model="newKb.name" 
-                type="text" 
+              <input
+                v-model="newKb.name"
+                type="text"
                 placeholder="e.g. OSHA Regulations 2026"
-                class="w-full bg-[#212121] border border-white/[0.08] rounded-xl px-4 py-3 text-white text-[14px] focus:outline-none focus:border-white/20 transition-all placeholder:text-[#7a7a7a]"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-[14px] focus:outline-none focus:border-white/20 transition-all placeholder:text-[#7a7a7a]"
                 @keyup.enter="createKb"
                 autofocus
               >
@@ -109,11 +109,11 @@
             
             <div>
               <label class="block text-[12px] font-medium text-[#b4b4b4] mb-1.5 ml-0.5">Description <span class="text-[#7a7a7a]">(Optional)</span></label>
-              <textarea 
-                v-model="newKb.description" 
+              <textarea
+                v-model="newKb.description"
                 rows="3"
                 placeholder="What types of documents will this include?"
-                class="w-full bg-[#212121] border border-white/[0.08] rounded-xl px-4 py-3 text-white text-[14px] focus:outline-none focus:border-white/20 transition-all placeholder:text-[#7a7a7a] resize-none"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-[14px] focus:outline-none focus:border-white/20 transition-all placeholder:text-[#7a7a7a] resize-none"
               ></textarea>
             </div>
           </div>
@@ -125,10 +125,10 @@
             >
               Cancel
             </button>
-            <button 
+            <button
               @click="createKb"
               :disabled="!newKb.name.trim() || creating"
-              class="px-6 py-2 text-[14px] font-medium bg-white text-black hover:bg-gray-100 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+              class="px-6 py-2 text-[14px] font-medium bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <svg v-if="creating" class="animate-spin h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
               <span v-else>Create</span>

@@ -163,14 +163,13 @@ function removeSelectedFile() {
   if (fileInput.value) fileInput.value.value = ''
 }
 </script>
-
 <template>
-  <div class="absolute bottom-0 left-0 right-0 px-4 md:px-8 bg-gradient-to-t from-[#212121] via-[#212121]/95 to-transparent pt-8 pb-4">
+  <div class="absolute bottom-0 left-0 right-0 px-4 md:px-8 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 pb-4">
     <div class="max-w-3xl mx-auto">
       
       <!-- File Preview -->
       <div v-if="selectedFile" class="mb-3 px-2 flex animate-in z-50 relative pointer-events-auto">
-        <div class="bg-[#2f2f2f] border border-white/10 rounded-xl px-4 py-3 flex flex-col gap-3 shadow-xl w-72 relative overflow-hidden">
+        <div class="bg-[#1c1c1c] border border-white/[0.06] rounded-2xl px-4 py-3 flex flex-col gap-3 shadow-xl w-72 relative overflow-hidden">
           <div class="flex items-start justify-between relative z-10">
             <div class="flex items-center gap-3">
               <div class="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
@@ -192,7 +191,7 @@ function removeSelectedFile() {
       </div>
 
       <!-- Input Container -->
-      <div class="bg-[#2f2f2f] border border-white/10 rounded-3xl p-3 flex flex-col shadow-lg transition-all focus-within:border-white/20 group">
+      <div class="bg-[#0f0f0f] border border-white/[0.06] rounded-2xl p-3 flex flex-col shadow-lg transition-all focus-within:border-white/20 group">
         <input 
           type="file" 
           ref="fileInput" 
@@ -239,7 +238,7 @@ function removeSelectedFile() {
 
               <!-- Unified Nested Dropdown -->
               <div v-if="showUnifiedDropdown" 
-                class="absolute bottom-[calc(100%+12px)] left-0 w-64 bg-[#2f2f2f] border border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in"
+                class="absolute bottom-[calc(100%+12px)] left-0 w-64 bg-[#1c1c1c] border border-white/[0.06] rounded-2xl shadow-2xl py-2 z-50 animate-in"
                 @mouseleave="activeSubmenu = null"
               >
                 <!-- Group 1: Files -->
@@ -279,8 +278,8 @@ function removeSelectedFile() {
                     </button>
 
                     <!-- Knowledge Submenu -->
-                    <div v-if="activeSubmenu === 'knowledge'" 
-                      class="absolute left-[calc(100%+8px)] bottom-0 w-64 bg-[#2f2f2f] border border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in"
+                    <div v-if="activeSubmenu === 'knowledge'"
+                      class="absolute left-[calc(100%+8px)] bottom-0 w-64 bg-[#1c1c1c] border border-white/[0.06] rounded-2xl shadow-2xl py-2 z-50 animate-in"
                     >
                       <div class="px-3 py-1.5 text-[10px] font-bold text-[#7a7a7a] uppercase tracking-widest mb-1">Colecciones (RAG)</div>
                       <div class="max-h-[240px] overflow-y-auto px-1 group">
@@ -333,8 +332,8 @@ function removeSelectedFile() {
                     </button>
 
                     <!-- MCP Submenu -->
-                    <div v-if="activeSubmenu === 'mcp'" 
-                      class="absolute left-[calc(100%+8px)] bottom-0 w-64 bg-[#2f2f2f] border border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in"
+                    <div v-if="activeSubmenu === 'mcp'"
+                      class="absolute left-[calc(100%+8px)] bottom-0 w-64 bg-[#1c1c1c] border border-white/[0.06] rounded-2xl shadow-2xl py-2 z-50 animate-in"
                     >
                       <div class="px-3 py-1.5 text-[10px] font-bold text-[#7a7a7a] uppercase tracking-widest mb-1">Fuentes de Datos</div>
                       <div class="max-h-[240px] overflow-y-auto px-1">
@@ -409,7 +408,7 @@ function removeSelectedFile() {
             <button 
               type="button"
               @click="handleSend"
-              class="p-2.5 bg-white text-black hover:bg-gray-200 rounded-full transition-all disabled:bg-white/20 disabled:text-[#7a7a7a] disabled:cursor-not-allowed active:scale-90 shadow-sm flex items-center justify-center"
+              class="p-2.5 bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-full transition-all disabled:bg-white/5 disabled:text-[#555] disabled:cursor-not-allowed active:scale-90 flex items-center justify-center"
               :disabled="(!chatInput.trim() && !selectedFile) || disabled || isUploading"
             >
               <svg v-if="!isUploading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
