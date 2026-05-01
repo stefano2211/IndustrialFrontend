@@ -28,7 +28,7 @@ export const chatService = {
         useGeneralist: boolean = false
     ): Promise<void> {
         const token = localStorage.getItem('token')
-        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+        const baseURL = import.meta.env.PROD ? (import.meta.env.VITE_API_URL || '') : ''
 
         const response = await fetch(`${baseURL}/chat/chat/stream`, {
             method: 'POST',

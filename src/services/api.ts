@@ -1,9 +1,10 @@
 import axios from 'axios'
 
 // Create a configured Axios instance
+// In dev mode, requests go through Vite's proxy (baseURL = '').
+// In production, VITE_API_URL points to the real backend.
 const api = axios.create({
-    // Use the backend URL from environment variables, fallback to local FastAPI default port
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+    baseURL: import.meta.env.PROD ? (import.meta.env.VITE_API_URL || '') : '',
     timeout: 60000,
     headers: {
         'Content-Type': 'application/json',

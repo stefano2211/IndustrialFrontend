@@ -90,7 +90,9 @@ const eventService = {
     onError?: (err: Event) => void
   ): EventSource {
     const token = localStorage.getItem('token')
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    // In dev mode use a relative URL so Vite's proxy handles the request (same-origin).
+    // In production, use the configured VITE_API_URL.
+    const baseURL = import.meta.env.PROD ? (import.meta.env.VITE_API_URL || '') : ''
     const url = `${baseURL}/events/stream`
 
     // EventSource doesn't support headers natively — we inject the token as a

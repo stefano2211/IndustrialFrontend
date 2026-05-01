@@ -10,6 +10,10 @@ const sseConnected = ref(false)
 const unreadCount = ref(0)
 let sseSource: EventSource | null = null
 
+// Live VLM Viewer State
+interface LiveScreenshot { b64: string; step: number; action?: string; click?: { x: number; y: number; type: string } }
+const liveScreenshot = ref<LiveScreenshot | null>(null)
+
 // Filters
 const filterSeverity = ref<EventSeverity | ''>('')
 const filterStatus = ref<EventStatus | ''>('')
@@ -73,6 +77,11 @@ function connectSSE() {
       if (payload.event === 'new_event') {
         unreadCount.value++
         loadEvents()
+      } else if (payload.event === 'screenshot') {
+        const id = payload.data?.id
+        if (selectedEvent.value?.id === id) {
+          liveScreenshot.value = payload.data
+        }
       } else if (payload.event === 'status_update' || payload.event === 'analysis_ready') {
         const id = payload.data?.id
         if (id) {
@@ -81,6 +90,9 @@ function connectSSE() {
             events.value[idx] = { ...events.value[idx], ...payload.data }
             if (selectedEvent.value?.id === id) {
               selectedEvent.value = { ...selectedEvent.value, ...payload.data }
+              if (payload.data.status && payload.data.status !== 'executing') {
+                liveScreenshot.value = null // Limpiar visor al terminar
+              }
             }
           } else {
             loadEvents()
@@ -137,6 +149,7 @@ async function confirmApproval() {
 function selectEvent(event: IndustrialEvent) {
   selectedEvent.value = event
   unreadCount.value = 0
+  liveScreenshot.value = null // clear when changing events
 }
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
@@ -397,10 +410,47 @@ function formatDate(d: string) {
             </div>
           </div>
 
+          <!-- Live Execution Viewer (VLM) -->
+          <div v-if="selectedEvent.status === 'executing' && liveScreenshot" class="relative bg-[#050505] rounded-xl border border-purple-500/40 overflow-hidden shadow-[0_0_20px_rgba(168,85,247,0.15)] ring-1 ring-purple-500/20 mb-4 group">
+            
+            <!-- Scanline / Glassmorphism overlay effect -->
+            <div class="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100%_4px] opacity-20 z-20 mix-blend-overlay"></div>
+            
+            <div class="px-5 py-3 bg-gradient-to-r from-purple-500/15 to-transparent border-b border-purple-500/20 flex items-center justify-between gap-4 relative z-30 backdrop-blur-md">
+              <div class="flex items-center gap-3">
+                <span class="relative flex h-2.5 w-2.5">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,1)]"></span>
+                </span>
+                <span class="text-[13px] font-bold text-purple-300 tracking-widest uppercase shadow-purple-500/50 drop-shadow-md">Aura Visión Activa</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-200 ml-1 border border-purple-500/30 font-mono">
+                  STEP {{ liveScreenshot.step }}
+                </span>
+              </div>
+              <div v-if="liveScreenshot.action" class="text-[12px] text-purple-200 font-mono bg-black/60 px-3 py-1.5 rounded-lg truncate max-w-[60%] border border-white/10 shadow-inner">
+                <span class="text-purple-400 mr-2">❯</span>{{ liveScreenshot.action }}
+              </div>
+            </div>
+            
+            <div class="relative w-full bg-black/80 flex justify-center items-center overflow-hidden min-h-[350px]">
+              <!-- The Screen -->
+              <img :src="`data:image/png;base64,${liveScreenshot.b64}`" class="w-full h-auto max-h-[70vh] object-contain transition-opacity duration-300 z-10" alt="Live screen" />
+              
+              <!-- The Click Pointer (Simulated) -->
+              <template v-if="liveScreenshot.click">
+                <div class="absolute w-8 h-8 -ml-4 -mt-4 pointer-events-none z-30 transition-all duration-300" :style="`left: ${liveScreenshot.click.x}%; top: ${liveScreenshot.click.y}%`">
+                  <div class="absolute inset-0 rounded-full border-2 border-orange-400 animate-[ping_1.5s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+                  <div class="absolute inset-0 rounded-full bg-orange-500/30 backdrop-blur-sm border border-orange-300/50 shadow-[0_0_15px_rgba(249,115,22,0.8)]"></div>
+                  <div class="absolute inset-[6px] rounded-full bg-orange-400 shadow-[0_0_10px_rgba(249,115,22,1)]"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
           <!-- Analyzing spinner -->
-          <div v-if="selectedEvent.status === 'analyzing' || selectedEvent.status === 'executing'" class="flex items-center gap-3 text-[13px] text-[#b4b4b4] py-2">
+          <div v-if="(selectedEvent.status === 'analyzing' || selectedEvent.status === 'executing') && !liveScreenshot" class="flex items-center gap-3 text-[13px] text-[#b4b4b4] py-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin shrink-0"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-            {{ selectedEvent.status === 'analyzing' ? 'El agente está analizando el evento…' : 'Ejecutando plan de remediación…' }}
+            {{ selectedEvent.status === 'analyzing' ? 'El agente experto está analizando el evento…' : 'Iniciando conexión con sistema de Visión Artificial…' }}
           </div>
 
         </div>
