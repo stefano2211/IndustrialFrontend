@@ -267,8 +267,12 @@ const eventService = {
   openSSEStream(
     onMessage: (payload: any) => void,
     onError?: (err: Event) => void
-  ): EventSource {
+  ): EventSource | null {
     const token = localStorage.getItem('token')
+    if (!token) {
+      console.warn('[SSE] No auth token found — skipping stream connection.')
+      return null
+    }
     const baseURL = import.meta.env.PROD ? (import.meta.env.VITE_API_URL || '') : ''
     const url = `${baseURL}/events/stream`
 

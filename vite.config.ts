@@ -1,86 +1,91 @@
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    vue(),
-    vueDevTools(),
-    tailwindcss(),
-  ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
-  },
-  server: {
-    proxy: {
-      // ── Reactive Events ────────────────────────────────────────────────
-      '/events': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      // ── Auth & Users ───────────────────────────────────────────────────
-      '/auth': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/users': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      // ── Chat / Conversations ───────────────────────────────────────────
-      '/chat': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/conversations': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      // ── Knowledge & Documents ──────────────────────────────────────────
-      '/knowledge': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/documents': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      // ── Tools / MCP ────────────────────────────────────────────────────
-      '/tools': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      // ── System / Admin / Other ─────────────────────────────────────────
-      '/system': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/admin': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/prompts': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/models': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/mlops': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/db-collector': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const API_TARGET = env.VITE_API_URL || 'http://localhost:8000'
+
+  return {
+    plugins: [
+      vue(),
+      vueDevTools(),
+      tailwindcss(),
+    ],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
       },
     },
-  },
+    server: {
+      proxy: {
+        // ── Reactive Events ────────────────────────────────────────────────
+        '/events': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        // ── Auth & Users ───────────────────────────────────────────────────
+        '/auth': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        '/users': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        // ── Chat / Conversations ───────────────────────────────────────────
+        '/chat': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        '/conversations': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        // ── Knowledge & Documents ──────────────────────────────────────────
+        '/knowledge': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        '/documents': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        // ── Tools / MCP ────────────────────────────────────────────────────
+        '/tools': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        // ── System / Admin / Other ─────────────────────────────────────────
+        '/system': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        '/admin': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        '/prompts': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        '/models': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        '/mlops': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+        '/db-collector': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
+      },
+    },
+  }
 })
