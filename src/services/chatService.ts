@@ -25,7 +25,8 @@ export const chatService = {
         onError: (error: string) => void,
         onSubagent: (subagent: { status: string, name: string, input?: any }) => void = () => {},
         onScreenshot: (screenshot: { b64: string, step: number, has_omniparser: boolean, action?: string, click?: { x: number, y: number, type: string } | null }) => void = () => {},
-        useGeneralist: boolean = false
+        useGeneralist: boolean = false,
+        onReasoning: (reasoning: string) => void = () => {}
     ): Promise<void> {
         const token = localStorage.getItem('token')
         const baseURL = import.meta.env.PROD ? (import.meta.env.VITE_API_URL || '') : ''
@@ -75,6 +76,8 @@ export const chatService = {
                         const data = JSON.parse(line.slice(6))
                         if (data.type === 'token') {
                             onToken(data.content)
+                        } else if (data.type === 'reasoning') {
+                            onReasoning(data.content)
                         } else if (data.type === 'meta') {
                             onMeta(data)
                         } else if (data.type === 'subagent') {

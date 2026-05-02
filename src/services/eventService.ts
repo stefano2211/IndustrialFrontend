@@ -20,6 +20,7 @@ export interface IndustrialEvent {
   description: string
   raw_payload?: Record<string, any>
   agent_analysis?: string
+  agent_reasoning?: string
   agent_plan?: string
   actions_taken?: any[]
   created_at: string

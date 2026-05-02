@@ -12,6 +12,7 @@ export interface Conversation {
 export interface MessageItem {
     role: 'user' | 'assistant'
     content: string
+    reasoning_content?: string | null
 }
 
 export const conversationService = {

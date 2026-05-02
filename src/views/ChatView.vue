@@ -3,6 +3,7 @@ import { inject, ref, watch, nextTick, type Ref } from 'vue'
 import WelcomeState from '@/components/chat/WelcomeState.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer.vue'
+import ReasoningBlock from '@/components/chat/ReasoningBlock.vue'
 import { chatService } from '@/services/chatService'
 import type { MessageItem } from '@/services/conversationService'
 
@@ -18,6 +19,7 @@ const chatParams = inject<any>('chatParams', {})
 
 const isLoading = ref(false)
 const streamingContent = ref('')
+const streamingReasoning = ref('')
 const chatContainer = ref<HTMLDivElement | null>(null)
 const useGeneralist = ref(true)
 
@@ -66,6 +68,7 @@ async function handleSendMessage(content: string) {
   activeMessages.value.push({ role: 'user', content })
   isLoading.value = true
   streamingContent.value = ''
+  streamingReasoning.value = ''
   activeSubagents.value = []
   currentScreenshot.value = null
   showScreenViewer.value = false
@@ -105,9 +108,14 @@ async function handleSendMessage(content: string) {
       },
       // onDone
       (fullContent: string) => {
-        const assistantMsg: MessageItem = { role: 'assistant', content: fullContent }
+        const assistantMsg: MessageItem = {
+          role: 'assistant',
+          content: fullContent,
+          reasoning_content: streamingReasoning.value || null,
+        }
         activeMessages.value.push(assistantMsg)
         streamingContent.value = ''
+        streamingReasoning.value = ''
         isLoading.value = false
         isThinking.value = false
         if (_thinkingTimer) { clearTimeout(_thinkingTimer); _thinkingTimer = null }
@@ -161,7 +169,11 @@ async function handleSendMessage(content: string) {
         }, 2000)
       },
       // useGeneralist
-      useGeneralist.value
+      useGeneralist.value,
+      // onReasoning
+      (reasoning: string) => {
+        streamingReasoning.value += reasoning
+      }
     )
   } catch (error) {
     console.error('Stream error', error)
@@ -228,6 +240,7 @@ function copyMessage(content: string) {
               <span class="text-[14px] font-medium text-white">Aura AI</span>
             </div>
             <div class="pl-10">
+              <ReasoningBlock v-if="msg.reasoning_content" :content="msg.reasoning_content" />
               <MarkdownRenderer :content="msg.content" />
               <!-- Action Icons -->
               <div class="flex items-center gap-0.5 mt-3 -ml-1.5">
@@ -272,6 +285,7 @@ function copyMessage(content: string) {
               </div>
             </div>
 
+            <ReasoningBlock v-if="streamingReasoning" :content="streamingReasoning" />
             <div v-if="streamingContent">
               <MarkdownRenderer :content="streamingContent" />
               <div class="inline-block w-[2px] h-[18px] bg-white/60 ml-0.5 animate-pulse align-text-bottom"></div>
