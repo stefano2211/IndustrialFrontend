@@ -8,7 +8,7 @@ export const documentService = {
             formData.append('knowledge_base_id', knowledgeBaseId)
         }
 
-        const response = await api.post('/documents/upload', formData, {
+        const response = await api.post('/api/v1/documents/upload', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -18,12 +18,12 @@ export const documentService = {
     },
 
     async getStatus(taskId: string) {
-        const response = await api.get(`/documents/status/${taskId}`)
+        const response = await api.get(`/api/v1/documents/status/${taskId}`)
         return response.data
     },
 
     async deleteDocument(docId: string) {
-        const response = await api.delete(`/documents/${docId}`)
+        const response = await api.delete(`/api/v1/documents/${docId}`)
         return response.data
     }
 }

@@ -17,12 +17,12 @@ export interface VLTrainingRequest {
 
 const mlopsService = {
   async launchTraining(payload: TrainingRequest): Promise<any> {
-    const response = await api.post('/mlops/training/launch', payload)
+    const response = await api.post('/api/v1/mlops/training/launch', payload)
     return response.data
   },
 
   async launchVLTraining(payload: VLTrainingRequest): Promise<any> {
-    const response = await api.post('/mlops/training/launch-vl', payload)
+    const response = await api.post('/api/v1/mlops/training/launch-vl', payload)
     return response.data
   }
 }

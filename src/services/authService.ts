@@ -2,8 +2,8 @@ import api from './api'
 
 export const authService = {
     async login(credentials: { email: string; password: string }) {
-        // Backend /auth/login expects a JSON body (UserLogin model)
-        const response = await api.post('/auth/login', {
+        // Backend /api/v1/auth/login expects a JSON body (UserLogin model)
+        const response = await api.post('/api/v1/auth/login', {
             email: credentials.email,
             password: credentials.password
         })
@@ -14,7 +14,7 @@ export const authService = {
 
     async register(data: { name?: string; email: string; password: string }) {
         // FastAPI expects JSON for registration including a username
-        const response = await api.post('/auth/register', {
+        const response = await api.post('/api/v1/auth/register', {
             username: data.name || data.email, // Backend requires a username field
             email: data.email,
             password: data.password

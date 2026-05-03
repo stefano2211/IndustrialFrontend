@@ -22,27 +22,27 @@ export interface KnowledgeBaseDetail extends KnowledgeBase {
 
 export const knowledgeService = {
     async createKnowledgeBase(name: string, description: string = '') {
-        const response = await api.post('/knowledge/', { name, description })
+        const response = await api.post('/api/v1/knowledge/', { name, description })
         return response.data as KnowledgeBase
     },
 
     async listKnowledgeBases() {
-        const response = await api.get('/knowledge/')
+        const response = await api.get('/api/v1/knowledge/')
         return response.data as KnowledgeBase[]
     },
 
     async getKnowledgeBase(id: string) {
-        const response = await api.get(`/knowledge/${id}`)
+        const response = await api.get(`/api/v1/knowledge/${id}`)
         return response.data as KnowledgeBaseDetail
     },
 
     async updateKnowledgeBase(id: string, name?: string, description?: string) {
-        const response = await api.patch(`/knowledge/${id}`, { name, description })
+        const response = await api.patch(`/api/v1/knowledge/${id}`, { name, description })
         return response.data as KnowledgeBase
     },
 
     async deleteKnowledgeBase(id: string) {
-        await api.delete(`/knowledge/${id}`)
+        await api.delete(`/api/v1/knowledge/${id}`)
     },
 
     // A helper function to upload document to a specific KB
@@ -52,7 +52,7 @@ export const knowledgeService = {
         formData.append('knowledge_base_id', kbId)
 
         // Using backend's unified /upload endpoint handled in documents.py
-        const response = await api.post('/documents/upload', formData, {
+        const response = await api.post('/api/v1/documents/upload', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

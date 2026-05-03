@@ -17,30 +17,30 @@ export interface MessageItem {
 
 export const conversationService = {
     async list(): Promise<Conversation[]> {
-        const response = await api.get('/conversations')
+        const response = await api.get('/api/v1/conversations')
         return response.data
     },
 
     async create(title: string = 'New Chat'): Promise<Conversation> {
-        const response = await api.post('/conversations', { title })
+        const response = await api.post('/api/v1/conversations', { title })
         return response.data
     },
 
     async getMessages(threadId: string): Promise<MessageItem[]> {
-        const response = await api.get(`/conversations/${threadId}/messages`)
+        const response = await api.get(`/api/v1/conversations/${threadId}/messages`)
         return response.data
     },
 
     async remove(threadId: string): Promise<void> {
-        await api.delete(`/conversations/${threadId}`)
+        await api.delete(`/api/v1/conversations/${threadId}`)
     },
 
     async archive(threadId: string, archive: boolean = true): Promise<void> {
-        await api.patch(`/conversations/${threadId}/archive?archive=${archive}`)
+        await api.patch(`/api/v1/conversations/${threadId}/archive?archive=${archive}`)
     },
 
     async listArchived(): Promise<Conversation[]> {
-        const response = await api.get('/conversations?include_archived=true')
+        const response = await api.get('/api/v1/conversations?include_archived=true')
         return (response.data as Conversation[]).filter(c => c.is_archived)
     }
 }

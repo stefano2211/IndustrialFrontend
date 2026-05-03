@@ -239,27 +239,27 @@ const eventService = {
     const params = Object.fromEntries(
       Object.entries(filters).filter(([, v]) => v !== undefined && v !== null)
     )
-    const res = await api.get('/events', { params })
+    const res = await api.get('/api/v1/events', { params })
     return res.data
   },
 
   async getEvent(id: string): Promise<IndustrialEvent> {
-    const res = await api.get(`/events/${id}`)
+    const res = await api.get(`/api/v1/events/${id}`)
     return res.data
   },
 
   async createManualEvent(payload: ManualEventPayload): Promise<IndustrialEvent> {
-    const res = await api.post('/events/manual', payload)
+    const res = await api.post('/api/v1/events/manual', payload)
     return res.data
   },
 
   async approveEvent(id: string, payload: ApprovalPayload = {}): Promise<IndustrialEvent> {
-    const res = await api.post(`/events/${id}/approve`, payload)
+    const res = await api.post(`/api/v1/events/${id}/approve`, payload)
     return res.data
   },
 
   async rejectEvent(id: string, payload: ApprovalPayload = {}): Promise<IndustrialEvent> {
-    const res = await api.post(`/events/${id}/reject`, payload)
+    const res = await api.post(`/api/v1/events/${id}/reject`, payload)
     return res.data
   },
 
@@ -275,7 +275,7 @@ const eventService = {
       return null
     }
     const baseURL = import.meta.env.PROD ? (import.meta.env.VITE_API_URL || '') : ''
-    const url = `${baseURL}/events/stream`
+    const url = `${baseURL}/api/v1/events/stream`
 
     const es = new EventSource(`${url}?token=${token}`)
     es.onmessage = (ev) => {

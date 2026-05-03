@@ -22,36 +22,36 @@ export type ModelUpdate = Partial<Model>
 
 const modelService = {
     async listModels(): Promise<Model[]> {
-        const response = await api.get('/models/')
+        const response = await api.get('/api/v1/models/')
         return response.data
     },
 
     async getModel(id: string): Promise<Model> {
-        const response = await api.get(`/models/${id}`)
+        const response = await api.get(`/api/v1/models/${id}`)
         return response.data
     },
 
     async createModel(model: ModelCreate): Promise<Model> {
-        const response = await api.post('/models/', model)
+        const response = await api.post('/api/v1/models/', model)
         return response.data
     },
 
     async updateModel(id: string, model: ModelUpdate): Promise<Model> {
-        const response = await api.put(`/models/${id}`, model)
+        const response = await api.put(`/api/v1/models/${id}`, model)
         return response.data
     },
 
     async deleteModel(id: string): Promise<void> {
-        await api.delete(`/models/${id}`)
+        await api.delete(`/api/v1/models/${id}`)
     },
 
     async listProviders(): Promise<any[]> {
-        const response = await api.get('/models/discovery/providers')
+        const response = await api.get('/api/v1/models/discovery/providers')
         return response.data
     },
 
     async listProviderModels(providerId: string): Promise<any[]> {
-        const response = await api.get(`/models/discovery/models/${providerId}`)
+        const response = await api.get(`/api/v1/models/discovery/models/${providerId}`)
         return response.data
     }
 }

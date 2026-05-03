@@ -62,41 +62,41 @@ export interface SystemSettings {
 
 export const adminService = {
     async listUsers(): Promise<AdminUser[]> {
-        const response = await api.get('/admin/users')
+        const response = await api.get('/api/v1/admin/users')
         return response.data
     },
 
     async updateUserRole(userId: string, isSuperuser: boolean): Promise<AdminUser> {
-        const response = await api.put(`/admin/users/${userId}/role`, { is_superuser: isSuperuser })
+        const response = await api.put(`/api/v1/admin/users/${userId}/role`, { is_superuser: isSuperuser })
         return response.data
     },
 
     async deleteUser(userId: string): Promise<void> {
-        await api.delete(`/admin/users/${userId}`)
+        await api.delete(`/api/v1/admin/users/${userId}`)
     },
 
     async getAnalytics(days: number = 7): Promise<AnalyticsData> {
-        const response = await api.get(`/admin/stats?days=${days}`)
+        const response = await api.get(`/api/v1/admin/stats?days=${days}`)
         return response.data
     },
 
     async getGeneralSettings(): Promise<SystemSettingsGeneral> {
-        const response = await api.get('/admin/settings/general')
+        const response = await api.get('/api/v1/admin/settings/general')
         return response.data
     },
 
     async updateGeneralSettings(settings: SystemSettingsGeneral): Promise<SystemSettingsGeneral> {
-        const response = await api.put('/admin/settings/general', settings)
+        const response = await api.put('/api/v1/admin/settings/general', settings)
         return response.data
     },
 
     async getSettings(): Promise<SystemSettings> {
-        const response = await api.get('/admin/settings/documents')
+        const response = await api.get('/api/v1/admin/settings/documents')
         return response.data
     },
 
     async updateSettings(settings: SystemSettings): Promise<SystemSettings> {
-        const response = await api.put('/admin/settings/documents', settings)
+        const response = await api.put('/api/v1/admin/settings/documents', settings)
         return response.data
     }
 }

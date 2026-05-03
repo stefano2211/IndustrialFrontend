@@ -40,26 +40,26 @@ export interface PromptUpdate extends Partial<PromptCreate> {
 
 const promptService = {
     async listPrompts(onlyEnabled = false): Promise<Prompt[]> {
-        const response = await api.get('/prompts/', { params: { only_enabled: onlyEnabled } })
+        const response = await api.get('/api/v1/prompts/', { params: { only_enabled: onlyEnabled } })
         return response.data
     },
 
     async createPrompt(prompt: PromptCreate): Promise<Prompt> {
-        const response = await api.post('/prompts/', prompt)
+        const response = await api.post('/api/v1/prompts/', prompt)
         return response.data
     },
 
     async updatePrompt(id: string, prompt: PromptUpdate): Promise<Prompt> {
-        const response = await api.patch(`/prompts/${id}`, prompt)
+        const response = await api.patch(`/api/v1/prompts/${id}`, prompt)
         return response.data
     },
 
     async setActive(id: string): Promise<void> {
-        await api.patch(`/prompts/${id}/active`)
+        await api.patch(`/api/v1/prompts/${id}/active`)
     },
 
     async deletePrompt(id: string): Promise<void> {
-        await api.delete(`/prompts/${id}`)
+        await api.delete(`/api/v1/prompts/${id}`)
     }
 }
 

@@ -8,7 +8,7 @@ export interface SystemStats {
 
 export const systemService = {
     async getStats(): Promise<SystemStats> {
-        const response = await api.get('/system/stats')
+        const response = await api.get('/api/v1/system/stats')
         return response.data
     }
 }

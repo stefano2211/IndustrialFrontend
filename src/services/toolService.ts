@@ -28,31 +28,31 @@ export interface ToolConfigUpdate {
 
 const toolService = {
     async listTools(): Promise<ToolConfig[]> {
-        const response = await api.get('/tools/')
+        const response = await api.get('/api/v1/tools/')
         return response.data
     },
 
     async getTool(id: number): Promise<ToolConfig> {
-        const response = await api.get(`/tools/${id}`)
+        const response = await api.get(`/api/v1/tools/${id}`)
         return response.data
     },
 
     async createTool(tool: Partial<ToolConfig>): Promise<ToolConfig> {
-        const response = await api.post('/tools/', tool)
+        const response = await api.post('/api/v1/tools/', tool)
         return response.data
     },
 
     async updateTool(id: number, tool: ToolConfigUpdate): Promise<ToolConfig> {
-        const response = await api.put(`/tools/${id}`, tool)
+        const response = await api.put(`/api/v1/tools/${id}`, tool)
         return response.data
     },
 
     async deleteTool(id: number): Promise<void> {
-        await api.delete(`/tools/${id}`)
+        await api.delete(`/api/v1/tools/${id}`)
     },
 
     async discoverTools(url: string, isStdio: boolean = false, isResource: boolean = false, method: string = 'GET'): Promise<any[]> {
-        const response = await api.get('/tools/mcp/discover', {
+        const response = await api.get('/api/v1/tools/mcp/discover', {
             params: { url, is_stdio: isStdio, is_resource: isResource, method }
         })
         return response.data
@@ -60,26 +60,26 @@ const toolService = {
 
     // MCP Sources
     async listSources(): Promise<MCPSource[]> {
-        const response = await api.get('/tools/sources/')
+        const response = await api.get('/api/v1/tools/sources/')
         return response.data
     },
 
     async createSource(source: Partial<MCPSource>): Promise<MCPSource> {
-        const response = await api.post('/tools/sources/', source)
+        const response = await api.post('/api/v1/tools/sources/', source)
         return response.data
     },
 
     async updateSource(id: string, source: Partial<MCPSource>): Promise<MCPSource> {
-        const response = await api.put(`/tools/sources/${id}`, source)
+        const response = await api.put(`/api/v1/tools/sources/${id}`, source)
         return response.data
     },
 
     async deleteSource(id: string): Promise<void> {
-        await api.delete(`/tools/sources/${id}`)
+        await api.delete(`/api/v1/tools/sources/${id}`)
     },
 
     async discoverSourceTools(id: string): Promise<any[]> {
-        const response = await api.get(`/tools/sources/${id}/discover`)
+        const response = await api.get(`/api/v1/tools/sources/${id}/discover`)
         return response.data
     }
 }

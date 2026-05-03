@@ -20,36 +20,36 @@ export interface DbSource {
 
 export default {
   async listSources(): Promise<DbSource[]> {
-    const res = await api.get('/db-collector/sources')
+    const res = await api.get('/api/v1/db-collector/sources')
     return res.data
   },
 
   async createSource(data: Partial<DbSource> & { connection_string: string }): Promise<DbSource> {
-    const res = await api.post('/db-collector/sources', data)
+    const res = await api.post('/api/v1/db-collector/sources', data)
     return res.data
   },
 
   async updateSource(id: string, data: Partial<DbSource> & { connection_string?: string }): Promise<DbSource> {
-    const res = await api.put(`/db-collector/sources/${id}`, data)
+    const res = await api.put(`/api/v1/db-collector/sources/${id}`, data)
     return res.data
   },
 
   async deleteSource(id: string): Promise<void> {
-    await api.delete(`/db-collector/sources/${id}`)
+    await api.delete(`/api/v1/db-collector/sources/${id}`)
   },
 
   async runSource(id: string): Promise<{ status: string; message: string }> {
-    const res = await api.post(`/db-collector/sources/${id}/run`)
+    const res = await api.post(`/api/v1/db-collector/sources/${id}/run`)
     return res.data
   },
 
   async runAll(): Promise<{ status: string; message: string }> {
-    const res = await api.post('/db-collector/run-all')
+    const res = await api.post('/api/v1/db-collector/run-all')
     return res.data
   },
 
   async getSourceStatus(id: string): Promise<DbSource> {
-    const res = await api.get(`/db-collector/sources/${id}/status`)
+    const res = await api.get(`/api/v1/db-collector/sources/${id}/status`)
     return res.data
   }
 }
