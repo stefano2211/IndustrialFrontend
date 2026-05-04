@@ -28,7 +28,7 @@ export interface ToolConfigUpdate {
 
 const toolService = {
     async listTools(): Promise<ToolConfig[]> {
-        const response = await api.get('/api/v1/tools/')
+        const response = await api.get('/api/v1/tools')
         return response.data
     },
 
@@ -38,7 +38,7 @@ const toolService = {
     },
 
     async createTool(tool: Partial<ToolConfig>): Promise<ToolConfig> {
-        const response = await api.post('/api/v1/tools/', tool)
+        const response = await api.post('/api/v1/tools', tool)
         return response.data
     },
 

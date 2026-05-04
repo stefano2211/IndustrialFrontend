@@ -23,6 +23,11 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
+        // ── All API v1 routes ────────────────────────────────────────────
+        '/api/v1': {
+          target: API_TARGET,
+          changeOrigin: true,
+        },
         // ── Reactive Events ────────────────────────────────────────────────
         '/events': {
           target: API_TARGET,

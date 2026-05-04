@@ -40,12 +40,12 @@ export interface PromptUpdate extends Partial<PromptCreate> {
 
 const promptService = {
     async listPrompts(onlyEnabled = false): Promise<Prompt[]> {
-        const response = await api.get('/api/v1/prompts/', { params: { only_enabled: onlyEnabled } })
+        const response = await api.get('/api/v1/prompts', { params: { only_enabled: onlyEnabled } })
         return response.data
     },
 
     async createPrompt(prompt: PromptCreate): Promise<Prompt> {
-        const response = await api.post('/api/v1/prompts/', prompt)
+        const response = await api.post('/api/v1/prompts', prompt)
         return response.data
     },
 

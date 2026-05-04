@@ -167,7 +167,7 @@ async function onFileChange(event: Event) {
     uploadStatusText.value = 'Iniciando subida...'
     const data = await knowledgeService.uploadDocumentToKnowledgeBase(props.id, file)
     
-    await pollTaskStatus(data.task_id)
+    await pollTaskStatus(data.id)
     
     // Refresh to get the true db record created by the backend
     await fetchKnowledgeBase()

@@ -74,7 +74,7 @@ async function pollPendingEvents() {
 // Load user info
 async function loadUserInfo() {
   try {
-    const response = await api.get('/users/me')
+    const response = await api.get('/api/v1/auth/me')
     userName.value = response.data.username || response.data.email?.split('@')[0] || 'User'
   } catch (error) {
     console.error('Failed to load user info', error)

@@ -22,7 +22,7 @@ export type ModelUpdate = Partial<Model>
 
 const modelService = {
     async listModels(): Promise<Model[]> {
-        const response = await api.get('/api/v1/models/')
+        const response = await api.get('/api/v1/models')
         return response.data
     },
 
@@ -32,7 +32,7 @@ const modelService = {
     },
 
     async createModel(model: ModelCreate): Promise<Model> {
-        const response = await api.post('/api/v1/models/', model)
+        const response = await api.post('/api/v1/models', model)
         return response.data
     },
 

@@ -22,12 +22,12 @@ export interface KnowledgeBaseDetail extends KnowledgeBase {
 
 export const knowledgeService = {
     async createKnowledgeBase(name: string, description: string = '') {
-        const response = await api.post('/api/v1/knowledge/', { name, description })
+        const response = await api.post('/api/v1/knowledge', { name, description })
         return response.data as KnowledgeBase
     },
 
     async listKnowledgeBases() {
-        const response = await api.get('/api/v1/knowledge/')
+        const response = await api.get('/api/v1/knowledge')
         return response.data as KnowledgeBase[]
     },
 

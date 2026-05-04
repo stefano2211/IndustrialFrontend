@@ -84,9 +84,9 @@ async function handleFileUpload() {
       selectedFile.value,
       activeKnowledgeBaseId.value || undefined
     )
-    currentPollingTaskId.value = data.task_id
+    currentPollingTaskId.value = data.id
     
-    const finalStatus = await pollTaskStatus(data.task_id)
+    const finalStatus = await pollTaskStatus(data.id)
     
     const successMsg = `[Archivo subido: ${selectedFile.value.name}] (Listo y vectorizado)`
     emit('send', chatInput.value ? `${chatInput.value}\n\n${successMsg}` : successMsg)
