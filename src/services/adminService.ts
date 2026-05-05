@@ -67,9 +67,8 @@ export const adminService = {
     },
 
     async updateUserRole(userId: string, isSuperuser: boolean): Promise<AdminUser> {
-        const response = await api.patch(`/api/v1/admin/users/${userId}`, {
-            role: isSuperuser ? 'admin' : 'user',
-            is_active: true
+        const response = await api.put(`/api/v1/admin/users/${userId}/role`, {
+            is_superuser: isSuperuser
         })
         return response.data
     },
@@ -78,35 +77,28 @@ export const adminService = {
         await api.delete(`/api/v1/admin/users/${userId}`)
     },
 
-    async getAnalytics(_days: number = 7): Promise<AnalyticsData> {
-        const response = await api.get('/api/v1/admin/analytics')
+    async getAnalytics(days: number = 7): Promise<AnalyticsData> {
+        const response = await api.get('/api/v1/admin/stats', { params: { days } })
         return response.data
     },
 
     async getGeneralSettings(): Promise<SystemSettingsGeneral> {
-        const response = await api.get('/api/v1/admin/settings')
-        // Backend returns read-only system config; adapt to frontend schema
+        const response = await api.get('/api/v1/admin/settings/general')
         return response.data as SystemSettingsGeneral
     },
 
-    async updateGeneralSettings(_settings: SystemSettingsGeneral): Promise<SystemSettingsGeneral> {
-        // No writable settings endpoint in current backend; return stored or mock
-        console.warn('updateGeneralSettings not supported by current backend')
-        return _settings
+    async updateGeneralSettings(settings: SystemSettingsGeneral): Promise<SystemSettingsGeneral> {
+        const response = await api.put('/api/v1/admin/settings/general', settings)
+        return response.data as SystemSettingsGeneral
     },
 
     async getSettings(): Promise<SystemSettings> {
-        // No dedicated document settings endpoint; return defaults
-        return {
-            document_chunk_size: 512,
-            document_chunk_overlap: 50,
-            retrieval_search_results: 5
-        }
+        const response = await api.get('/api/v1/admin/settings/documents')
+        return response.data as SystemSettings
     },
 
     async updateSettings(settings: SystemSettings): Promise<SystemSettings> {
-        // No writable settings endpoint in current backend
-        console.warn('updateSettings not supported by current backend')
-        return settings
+        const response = await api.put('/api/v1/admin/settings/documents', settings)
+        return response.data as SystemSettings
     }
 }

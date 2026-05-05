@@ -43,7 +43,7 @@ const toolService = {
     },
 
     async updateTool(id: number, tool: ToolConfigUpdate): Promise<ToolConfig> {
-        const response = await api.put(`/api/v1/tools/${id}`, tool)
+        const response = await api.patch(`/api/v1/tools/${id}`, tool)
         return response.data
     },
 
@@ -70,7 +70,7 @@ const toolService = {
     },
 
     async updateSource(id: string, source: Partial<MCPSource>): Promise<MCPSource> {
-        const response = await api.put(`/api/v1/tools/sources/${id}`, source)
+        const response = await api.patch(`/api/v1/tools/sources/${id}`, source)
         return response.data
     },
 

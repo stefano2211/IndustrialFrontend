@@ -54,10 +54,6 @@ const promptService = {
         return response.data
     },
 
-    async setActive(id: string): Promise<void> {
-        await api.patch(`/api/v1/prompts/${id}/active`)
-    },
-
     async deletePrompt(id: string): Promise<void> {
         await api.delete(`/api/v1/prompts/${id}`)
     }

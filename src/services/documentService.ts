@@ -19,10 +19,15 @@ export const documentService = {
 
     async getStatus(docId: string) {
         const response = await api.get(`/api/v1/documents/${docId}`)
-        // Adapt backend DocumentOut to frontend expected shape
         const doc = response.data
+        
+        let status = 'PENDING';
+        if (doc.status === 'processing') status = 'PROGRESS';
+        else if (doc.status === 'indexed') status = 'SUCCESS';
+        else if (doc.status === 'failed' || doc.status === 'error') status = 'FAILURE';
+
         return {
-            status: doc.status === 'uploaded' ? 'PENDING' : (doc.status === 'processing' ? 'PROGRESS' : 'SUCCESS'),
+            status,
             info: { status: doc.status }
         }
     },

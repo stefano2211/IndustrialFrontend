@@ -199,7 +199,7 @@ async function pollTaskStatus(taskId: string): Promise<string> {
           return
         }
 
-        if (status === 'SUCCESS' || metaStatus === 'completado') {
+        if (status === 'SUCCESS' || metaStatus === 'indexed') {
           uploadProgress.value = 100
           uploadStatusText.value = 'Completado'
           clearInterval(interval)
@@ -208,15 +208,10 @@ async function pollTaskStatus(taskId: string): Promise<string> {
         }
 
         if (status === 'PROGRESS') {
-           if (metaStatus === 'descargando') {
-             uploadProgress.value = 30
-             uploadStatusText.value = 'Descargando...'
-           } else if (metaStatus === 'procesando') {
-             uploadProgress.value = 70
-             uploadStatusText.value = 'Vectorizando...'
-           }
+           uploadProgress.value = 60
+           uploadStatusText.value = 'Vectorizando y analizando...'
         } else if (status === 'PENDING') {
-           uploadProgress.value = 15
+           uploadProgress.value = 20
            uploadStatusText.value = 'En cola...'
         }
       } catch (err) {

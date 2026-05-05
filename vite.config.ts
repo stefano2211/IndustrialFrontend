@@ -23,70 +23,9 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
-        // ── All API v1 routes ────────────────────────────────────────────
+        // Only API routes are proxied to the backend. All other paths are
+        // served by Vite's SPA fallback (index.html for unknown routes).
         '/api/v1': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        // ── Reactive Events ────────────────────────────────────────────────
-        '/events': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        // ── Auth & Users ───────────────────────────────────────────────────
-        '/auth': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        '/users': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        // ── Chat / Conversations ───────────────────────────────────────────
-        '/chat': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        '/conversations': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        // ── Knowledge & Documents ──────────────────────────────────────────
-        '/knowledge': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        '/documents': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        // ── Tools / MCP ────────────────────────────────────────────────────
-        '/tools': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        // ── System / Admin / Other ─────────────────────────────────────────
-        '/system': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        '/admin': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        '/prompts': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        '/models': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        '/mlops': {
-          target: API_TARGET,
-          changeOrigin: true,
-        },
-        '/db-collector': {
           target: API_TARGET,
           changeOrigin: true,
         },
