@@ -18,7 +18,14 @@ export const authService = {
             username: data.name || data.email, // Backend requires a username field
             email: data.email,
             password: data.password
-        })
         return response.data
+    },
+
+    async logout() {
+        try {
+            await api.post('/api/v1/auth/logout')
+        } catch (error) {
+            console.error('Logout API call failed, but proceeding with local logout', error)
+        }
     }
 }

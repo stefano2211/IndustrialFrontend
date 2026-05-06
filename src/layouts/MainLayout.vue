@@ -8,6 +8,7 @@ import { knowledgeService, type KnowledgeBase } from '@/services/knowledgeServic
 import modelService from '@/services/modelService'
 import toolService, { type MCPSource } from '@/services/toolService'
 import api from '@/services/api'
+import { authService } from '@/services/authService'
 import { systemService } from '@/services/systemService'
 import eventService from '@/services/eventService'
 
@@ -225,7 +226,8 @@ async function handleSelectConversation(threadId: string) {
 }
 
 // Handle logout
-function handleLogout() {
+async function handleLogout() {
+  await authService.logout()
   localStorage.removeItem('token')
   router.push('/login')
 }
