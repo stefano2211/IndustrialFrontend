@@ -18,6 +18,7 @@ export const authService = {
             username: data.name || data.email, // Backend requires a username field
             email: data.email,
             password: data.password
+        })
         return response.data
     },
 

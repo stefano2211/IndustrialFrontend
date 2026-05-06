@@ -302,6 +302,8 @@ onUnmounted(() => {
       @toggle="toggleSidebar"
       @new-chat="handleNewChat"
       @select-conversation="handleSelectConversation"
+      @logout="handleLogout"
+      @archive-action="handleOpenArchived"
     />
 
     <!-- Main Content Area Wrapper -->
